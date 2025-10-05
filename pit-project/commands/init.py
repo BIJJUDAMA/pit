@@ -4,7 +4,7 @@
 # What data structure it uses: Tree (the file system directory structure is a tree). It also lays the foundation for a Hash Table (the object database) and a Directed Acyclic Graph (the commit history)
 
 import sys
-
+import os
 def run(args):
 
     try:
