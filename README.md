@@ -1,14 +1,14 @@
 # Pit - A Simple Version Control System
 
-Pit is a simplifiedversion control system built from scratch in Python. It is designed as an educational project to copy version control systems like Git. By focusing on the fundamental data structures and workflows, Pit faithfully reimplements Git seeking inspiration from it
+Pit is a simplified version control system built from scratch in Python. It is designed as an educational project to copy version control systems like Git.
 
-The system is built on first principles, demonstrating how a powerful tool like Git can be constructed using a few elegant computer science concepts.
+Pit draws heavy inspiration from Git and is basically a recreation of Git in Python (Pit)
 
-## Core Concepts
+Core Concepts
 
 Pit is built on the same three fundamental ideas that power Git:
 
-1. **Content-Addressable Storage (Blobs):** The content of every file is stored in an object called a "blob." The name of this object is not a filename, but the SHA-1 hash of its content. This means identical files are only stored once, and the integrity of the data is guaranteed—if the content changes, its hash (and thus its name) will change.
+1. **Content-Addressable Storage (Blobs):** The content of every file is stored in an object called a "blob." The name of this object is not a filename, but the SHA-1 hash of its content. This means identical files are only stored once, and the integrity of the data is guaranteed if the content changes, its hash (and thus its name) will change.
 2. **Hierarchical Trees (Merkle Trees):** The directory structure is captured in "tree" objects. A tree contains pointers to blobs (for files) and other trees (for subdirectories). Each tree is also identified by its SHA-1 hash, which is derived from the contents of the tree (the list of its children's hashes). This creates a Merkle tree, where a single hash at the top can verify the integrity of the entire project's file structure.
 3. **Historical Snapshots (Commits):** A "commit" object represents a snapshot of the entire project at a single point in time. It contains a pointer to the root tree object, metadata (author, message, timestamp), and pointers to one or more parent commits. This chain of parent pointers forms the project's history as a Directed Acyclic Graph (DAG).
 
@@ -80,5 +80,5 @@ chmod +x full_test.sh
 * **`checkout`** : Used in [TEST 3], [TEST 4], [TEST 5], and [TEST 6]
 * **`diff`** : The `--staged` version is used in [TEST 5]
 * **`reset`** : Used in [TEST 5]
-* **`merge`** : Used in [TEST 6]  
+* **`merge`** : Used in [TEST 6]
 * **`status`** : Used in [TEST 5]
