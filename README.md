@@ -57,7 +57,10 @@ docker build -t pit-env .
 ```
 docker run -it --rm -v "$(pwd)":/workspace pit-env
 ```
-
+<i>If you do not have docker you can always run the commands in the manner of</i>
+```
+python3 <path to pit project>/pit/pit-project/pit.py
+```
 # Testing
 
 The `full_test.sh` script provides a comprehensive test that exercises all of the major features of Pit
