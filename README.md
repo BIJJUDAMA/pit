@@ -54,11 +54,19 @@ docker build -t pit-env .
 
 ### 2. Run the Docker Image
 
+**On Linux:**
+
 ```
 docker run -it --rm -v "$(pwd)":/workspace pit-env
 ```
 
-`<i>`If you do not have docker you can always run the commands in the manner of`</i>`
+**On Windows:**
+
+```
+docker run -it --rm -v "${PWD}}":/workspace pit-env
+```
+
+`<i>`If you do not have docker you can always run the commands in the manner of `</i>`
 
 ```
 python3 <path to pit project>/pit/pit-project/pit.py
