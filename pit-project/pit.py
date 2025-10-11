@@ -1,7 +1,7 @@
 import argparse
 from commands import (
     init, add, commit, log, status, config,
-    branch, checkout, diff, merge, reset, revert  
+    branch, checkout, diff, merge, reset, revert,show  
 )
 # The main entry point for the Pit version control system
 def main():
@@ -25,6 +25,13 @@ def main():
 
     # Command: log
     log_parser = subparsers.add_parser("log", help="Show commit logs.")
+    log_parser.add_argument("--oneline", action="store_true", help="Show one commit per line.")
+    log_parser.add_argument("--graph", action="store_true", help="Show ASCII graph of commit history.")
+    log_parser.add_argument("--since", help="Show commits more recent than specific date.")
+    log_parser.add_argument("--grep", help="Filter commits by message pattern.")
+    log_parser.add_argument("--patch", "-p", action="store_true", help="Show patch for specified file.")
+    log_parser.add_argument("file", nargs="?", help="Show only commits affecting specific file.")
+    log_parser.add_argument("-n", "--max-count", type=int, help="Limit number of commits to show.")
     log_parser.set_defaults(func=log.run)
 
     # Command: status
@@ -66,6 +73,12 @@ def main():
     revert_parser = subparsers.add_parser("revert", help="Revert an existing commit.")
     revert_parser.add_argument("commit_hash", help="The commit hash to revert.")
     revert_parser.set_defaults(func=revert.run)
+    
+    # Command: show
+    show_parser = subparsers.add_parser("show", help="Show various types of objects.")
+    show_parser.add_argument("--name-only", action="store_true", help="Show only names of changed files.")
+    show_parser.add_argument("commit_and_file", nargs="?", help="Commit and file to show (commit:file).")
+    show_parser.set_defaults(func=show.run)
     # Parse the arguments
     args = parser.parse_args()
 
