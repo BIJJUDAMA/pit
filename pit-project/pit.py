@@ -74,11 +74,6 @@ def main():
     revert_parser.add_argument("commit_hash", help="The commit hash to revert.")
     revert_parser.set_defaults(func=revert.run)
     
-    # Command: show
-    show_parser = subparsers.add_parser("show", help="Show various types of objects.")
-    show_parser.add_argument("--name-only", action="store_true", help="Show only names of changed files.")
-    show_parser.add_argument("commit_and_file", nargs="?", help="Commit and file to show (commit:file).")
-    show_parser.set_defaults(func=show.run)
     # Parse the arguments
     args = parser.parse_args()
 
