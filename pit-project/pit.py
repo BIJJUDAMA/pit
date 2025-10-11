@@ -1,7 +1,7 @@
 import argparse
 from commands import (
     init, add, commit, log, status, config,
-    branch, checkout, diff, merge, reset
+    branch, checkout, diff, merge, reset, revert  
 )
 # The main entry point for the Pit version control system
 def main():
@@ -62,6 +62,10 @@ def main():
     reset_parser.add_argument("files", nargs="+", help="Files to unstage from the index.")
     reset_parser.set_defaults(func=reset.run)
 
+    # Command: revert
+    revert_parser = subparsers.add_parser("revert", help="Revert an existing commit.")
+    revert_parser.add_argument("commit_hash", help="The commit hash to revert.")
+    revert_parser.set_defaults(func=revert.run)
     # Parse the arguments
     args = parser.parse_args()
 
