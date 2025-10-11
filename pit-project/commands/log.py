@@ -7,6 +7,7 @@ import os
 import time
 from datetime import datetime, timedelta
 from utils import repository, objects
+import fnmatch
 
 def run(args): 
     repo_root = repository.find_repo_root()
@@ -272,16 +273,24 @@ def _is_within_relative_time(commit_date, time_str):
         return commit_date >= cutoff
     except:
         return True
-
-def _commit_matches_grep(commit_data, pattern):
-    pattern = pattern.lower()
-    return pattern in commit_data['message'].lower()
-
-def _commit_affects_file(repo_root, commit_data, file_path):
+    
+#Check if commit message matches grep pattern
+def _commit_affects_file(repo_root, commit_data, file_pattern):
     try:
         commit_files = objects.get_commit_files(repo_root, commit_data['hash'])
-        return file_path in commit_files
-    except:
+        
+        # Wildcard support using fnmatch
+        if '*' in file_pattern or '?' in file_pattern or '[' in file_pattern:
+            for file_path in commit_files.keys():
+                if fnmatch.fnmatch(file_path, file_pattern):
+                    return True
+            return False
+        else:
+            # Exact match for normal file paths
+            return file_pattern in commit_files
+            
+    except Exception as e:
+        print(f"Debug: Error checking files in commit {commit_data['hash'][:7]}: {e}", file=sys.stderr)
         return False
 
 def _print_commit_details(commit_data, args):
