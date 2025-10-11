@@ -19,39 +19,58 @@ def run(args):
         print(f"fatal: your current branch '{current_branch}' does not have any commits yet")
         return
 
-    while commit_hash: # Traverse commits until there are no more parents
+    # Use a set to track visited commits and avoid duplicates
+    visited = set()
+    # Use a stack for proper DAG traversal (instead of simple linear traversal)
+    stack = [commit_hash]
+    
+    while stack:
+        current_hash = stack.pop()
+        
+        # Skip if we've already visited this commit
+        if current_hash in visited:
+            continue
+        visited.add(current_hash)
+        
         try:
-            obj_type, content = objects.read_object(repo_root, commit_hash)
+            obj_type, content = objects.read_object(repo_root, current_hash)
         except FileNotFoundError:
-            print(f"fatal: could not read commit object {commit_hash}", file=sys.stderr)
-            break
+            print(f"fatal: could not read commit object {current_hash}", file=sys.stderr)
+            continue
 
         if obj_type != 'commit':
-            print(f"fatal: object {commit_hash} is not a commit", file=sys.stderr)
-            break
+            print(f"fatal: object {current_hash} is not a commit", file=sys.stderr)
+            continue
 
         lines = content.decode().splitlines()
         
-        print(f"commit {commit_hash}")
+        print(f"commit {current_hash}")
 
-        # Finding the first commit parent (if any)
-        next_parent = None
+        # Find ALL parents (not just the first one)
+        parents = []
         message_started = False
         message = []
 
         for line in lines:
             if line.startswith('parent '):
-                if not next_parent:
-                    next_parent = line.split(' ')[1]
+                parent_hash = line.split(' ')[1]
+                parents.append(parent_hash)
             elif line.startswith('author '):
-                print(line)
+                print(f"Author: {line[7:]}")
+            elif line.startswith('committer '):
+                print(f"Committer: {line[10:]}")
             elif not line.strip() and not message_started:
                 message_started = True
             elif message_started:
                 message.append(line)
         
-        print("\n".join(message)) 
+        # Add parents to stack in reverse order for proper traversal
+        # This ensures we visit the main branch first, then feature branches
+        for parent in reversed(parents):
+            if parent not in visited:
+                stack.append(parent)
+        
         print() 
-
-        commit_hash = next_parent
+        print("\n".join(message)) 
+        print()  
 
