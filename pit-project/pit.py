@@ -1,9 +1,9 @@
 import argparse
 from commands import (
     init, add, commit, log, status, config,
-    branch, checkout, diff, merge, reset, revert,show  
+    branch, checkout, diff, merge, reset, 
+    revert
 )
-# The main entry point for the Pit version control system
 def main():
     # The main parser
     parser = argparse.ArgumentParser(description="Pit: A simple version control system.")
@@ -39,8 +39,8 @@ def main():
     status_parser.set_defaults(func=status.run)
     
     # Command: config
-    config_parser = subparsers.add_parser("config", help="Set user name and email.")
-    config_parser.add_argument("key", help="The configuration key (e.g., user.name).")
+    config_parser = subparsers.add_parser("config", help="Set configuration options (e.g., user.name, github.token).")
+    config_parser.add_argument("key", help="The configuration key (e.g., user.name or github.token).")
     config_parser.add_argument("value", help="The configuration value.")
     config_parser.set_defaults(func=config.run)
 
@@ -74,6 +74,15 @@ def main():
     revert_parser.add_argument("commit_hash", help="The commit hash to revert.")
     revert_parser.set_defaults(func=revert.run)
     
+    # Command: remote
+    remote_parser = subparsers.add_parser("remote", help="Manage remote repositories (HTTPS only)")
+    remote_parser.add_argument("subcommand", help="Subcommand: add, remove, list, set-url")
+    remote_parser.add_argument("name", nargs="?", help="Remote name")
+    remote_parser.add_argument("url", nargs="?", help="HTTPS URL (e.g., https://github.com/user/repo.git)")
+    remote_parser.set_defaults(func=remote.run)
+
+
+    
     # Parse the arguments
     args = parser.parse_args()
 
@@ -85,4 +94,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
