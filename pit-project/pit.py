@@ -2,7 +2,7 @@ import argparse
 from commands import (
     init, add, commit, log, status, config,
     branch, checkout, diff, merge, reset,
-    revert, remote, push, pull, clone
+    revert
 )
 
 # The main entry point for the Pit version control system
@@ -55,6 +55,7 @@ def main():
     #Command: checkout
     checkout_parser = subparsers.add_parser("checkout", help="Switch branches or restore working tree files.")
     checkout_parser.add_argument("targets", nargs="+", help="Branch name to switch to, or file(s) to restore from index.")
+    checkout_parser.add_argument("-b", "--branch", action="store_true", help="Create a new branch and switch to it.")
     checkout_parser.set_defaults(func=checkout.run)
     
 
@@ -77,35 +78,6 @@ def main():
     revert_parser = subparsers.add_parser("revert", help="Revert an existing commit.")
     revert_parser.add_argument("commit_hash", help="The commit hash to revert.")
     revert_parser.set_defaults(func=revert.run)
-
-    # Command: remote
-    remote_parser = subparsers.add_parser("remote", help="Manage remote repositories (HTTPS only)")
-    remote_parser.add_argument("subcommand", help="Subcommand: add, remove, list, set-url")
-    remote_parser.add_argument("name", nargs="?", help="Remote name")
-    remote_parser.add_argument("url", nargs="?", help="HTTPS URL (e.g., https://github.com/user/repo.git)")
-    remote_parser.set_defaults(func=remote.run)
-
-    # Command: push
-    push_parser = subparsers.add_parser("push", help="Push to remote repository via HTTPS")
-    push_parser.add_argument("remote", help="Remote name")
-    push_parser.add_argument("branch", help="Branch to push")
-    push_parser.add_argument("-u", "--set-upstream", action="store_true",
-                            help="Set upstream branch tracking")
-    push_parser.add_argument("-f", "--force", action="store_true",
-                            help="Force push (overwrite remote)")
-    push_parser.set_defaults(func=push.run)
-
-    # Command: pull
-    pull_parser = subparsers.add_parser("pull", help="Fetch and integrate changes from remote")
-    pull_parser.add_argument("remote", help="Remote name")
-    pull_parser.add_argument("branch", help="Branch to pull")
-    pull_parser.set_defaults(func=pull.run)
-
-    # Command: clone
-    clone_parser = subparsers.add_parser("clone", help="Clone a repository into a new directory.")
-    clone_parser.add_argument("repository_url", help="The HTTPS URL of the repository to clone.")
-    clone_parser.add_argument("directory", nargs="?", help="The name of the directory to clone into.")
-    clone_parser.set_defaults(func=clone.run)
 
     # Parse the arguments
     args = parser.parse_args()
