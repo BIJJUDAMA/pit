@@ -17,7 +17,8 @@ def main():
 
     # Command: add
     add_parser = subparsers.add_parser("add", help="Add file contents to the index.")
-    add_parser.add_argument("files", nargs="+", help="Files to add.")
+    add_parser.add_argument("files", nargs="*", help="Files to add.")
+    add_parser.add_argument("-A", "--all", action="store_true", help="Add all files in the repository.")
     add_parser.set_defaults(func=add.run)
 
     # Command: commit
