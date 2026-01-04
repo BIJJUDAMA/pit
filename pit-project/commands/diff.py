@@ -59,7 +59,7 @@ def _get_index_files(repo_root):
                 if len(parts) >= 4:
                     # New format
                     hash_val = parts[0]
-                    mtime = float(parts[1])
+                    mtime = int(parts[1])
                     size = int(parts[2])
                     path = " ".join(parts[3:])
                     index_files[path] = (hash_val, mtime, size)
@@ -86,7 +86,7 @@ def _get_working_dir_files(repo_root, index_files=None):
             if not ignore.is_ignored(rel_path, ignore_patterns):
                 try:
                     stats = os.stat(file_path)
-                    current_mtime = stats.st_mtime
+                    current_mtime = stats.st_mtime_ns
                     current_size = stats.st_size
                     
                     # Optimization: Check if file in index matches mtime and size

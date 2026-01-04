@@ -30,7 +30,7 @@ def run(args):
                 if len(parts) >= 4:
                     # New format: hash mtime size path
                     hash_val = parts[0]
-                    mtime = float(parts[1])
+                    mtime = int(parts[1])
                     size = int(parts[2])
                     # Join the rest as path in case path contains spaces (though splitting by ' ' earlier might be risky if we don't handle maxsplit carefully, but let's stick to simple split for now or better, maxsplit)
                     # Actually, the original code did `line.strip().split(' ', 1)`. 
@@ -64,7 +64,7 @@ def run(args):
             
             # Get metadata
             stats = os.stat(file_path)
-            mtime = stats.st_mtime
+            mtime = stats.st_mtime_ns
             size = stats.st_size
 
             # Create a blob object and get its hash
