@@ -2,7 +2,8 @@ import argparse
 from commands import (
     init, add, commit, log, status, config,
     branch, checkout, diff, merge, reset,
-    revert, stash
+    revert, clean,
+    # remote, push, pull, clone
 )
 
 # The main entry point for the Pit version control system
@@ -55,6 +56,7 @@ def main():
     #Command: checkout
     checkout_parser = subparsers.add_parser("checkout", help="Switch branches or restore working tree files.")
     checkout_parser.add_argument("targets", nargs="+", help="Branch name to switch to, or file(s) to restore from index.")
+    checkout_parser.add_argument("-b", "--branch", action="store_true", help="Create a new branch and switch to it.")
     checkout_parser.set_defaults(func=checkout.run)
     
 
@@ -78,49 +80,41 @@ def main():
     revert_parser.add_argument("commit_hash", help="The commit hash to revert.")
     revert_parser.set_defaults(func=revert.run)
 
-    # Command: remote
+    # Command: clean
+    clean_parser = subparsers.add_parser("clean", help="Remove untracked files from the working tree.")
+    clean_parser.add_argument("-n", "--dry-run", action="store_true", dest="n", help="Show what would be removed.")
+    clean_parser.add_argument("-f", "--force", action="store_true", dest="f", help="Force deletion of untracked files.")
+    clean_parser.add_argument("-d", action="store_true", help="Remove untracked directories as well.")
+    clean_parser.set_defaults(func=clean.run)
+
+    # # Command: remote
     # remote_parser = subparsers.add_parser("remote", help="Manage remote repositories (HTTPS only)")
     # remote_parser.add_argument("subcommand", help="Subcommand: add, remove, list, set-url")
     # remote_parser.add_argument("name", nargs="?", help="Remote name")
     # remote_parser.add_argument("url", nargs="?", help="HTTPS URL (e.g., https://github.com/user/repo.git)")
-    # remote_parser.set_defaults(func=remote.run) if 'remote' in globals() else None
+    # remote_parser.set_defaults(func=remote.run)
 
-    # Command: push
+    # # Command: push
     # push_parser = subparsers.add_parser("push", help="Push to remote repository via HTTPS")
     # push_parser.add_argument("remote", help="Remote name")
     # push_parser.add_argument("branch", help="Branch to push")
     # push_parser.add_argument("-u", "--set-upstream", action="store_true",
-    #                         help="Set upstream branch tracking")
+    # #                         help="Set upstream branch tracking")
     # push_parser.add_argument("-f", "--force", action="store_true",
-    #                         help="Force push (overwrite remote)")
-    # push_parser.set_defaults(func=push.run) if 'push' in globals() else None
+    # #                         help="Force push (overwrite remote)")
+    # push_parser.set_defaults(func=push.run)
 
-    # Command: pull
+    # # Command: pull
     # pull_parser = subparsers.add_parser("pull", help="Fetch and integrate changes from remote")
     # pull_parser.add_argument("remote", help="Remote name")
     # pull_parser.add_argument("branch", help="Branch to pull")
-    # pull_parser.set_defaults(func=pull.run) if 'pull' in globals() else None
+    # pull_parser.set_defaults(func=pull.run)
 
-    # Command: clone
+    # # Command: clone
     # clone_parser = subparsers.add_parser("clone", help="Clone a repository into a new directory.")
     # clone_parser.add_argument("repository_url", help="The HTTPS URL of the repository to clone.")
     # clone_parser.add_argument("directory", nargs="?", help="The name of the directory to clone into.")
-    # clone_parser.set_defaults(func=clone.run) if 'clone' in globals() else None
-
-    # Command: stash
-    stash_parser = subparsers.add_parser("stash", help="Stash the changes in a dirty working directory away.")
-    stash_subparsers = stash_parser.add_subparsers(dest="stash_command", help="Stash commands")
-    
-    stash_push_parser = stash_subparsers.add_parser("push", help="Push current state to stash")
-    stash_push_parser.add_argument("-m", "--message", help="Stash message")
-    
-    stash_pop_parser = stash_subparsers.add_parser("pop", help="Remove a single stashed state from the stash list and apply it")
-    
-    stash_list_parser = stash_subparsers.add_parser("list", help="List the stash entries")
-    
-    stash_clear_parser = stash_subparsers.add_parser("clear", help="Remove all the stash entries")
-    
-    stash_parser.set_defaults(func=stash.run)
+    # clone_parser.set_defaults(func=clone.run)
 
     # Parse the arguments
     args = parser.parse_args()
