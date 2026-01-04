@@ -26,8 +26,21 @@ def run(args):
     if os.path.exists(index_path):
         with open(index_path, 'r') as f:
             for line in f:
-                hash_val, path = line.strip().split(' ', 1)
-                index[path] = hash_val
+                parts = line.strip().split(' ')
+                if len(parts) >= 4:
+                    # New format: hash mtime size path
+                    hash_val = parts[0]
+                    mtime = float(parts[1])
+                    size = int(parts[2])
+                    # Join the rest as path in case path contains spaces (though splitting by ' ' earlier might be risky if we don't handle maxsplit carefully, but let's stick to simple split for now or better, maxsplit)
+                    # Actually, the original code did `line.strip().split(' ', 1)`. 
+                    # If I change format to `hash mtime size path`, I should split carefully.
+                    path = " ".join(parts[3:]) 
+                    index[path] = (hash_val, mtime, size)
+                else:
+                    # Old format: hash path
+                    hash_val, path = line.strip().split(' ', 1)
+                    index[path] = (hash_val, 0, 0) # Default mtime/size to 0
 
     files_to_add = _expand_files(args, repo_root)
 
@@ -38,8 +51,7 @@ def run(args):
         
         rel_path = os.path.relpath(file_path, repo_root)
         
-                # Check if the file should be ignored
-
+        # Check if the file should be ignored
         if ignore.is_ignored(rel_path, ignore_patterns):
             continue
 
@@ -50,24 +62,26 @@ def run(args):
             with open(file_path, 'rb') as f:
                 content = f.read()
             
-                        # Create a blob object and get its hash
+            # Get metadata
+            stats = os.stat(file_path)
+            mtime = stats.st_mtime
+            size = stats.st_size
 
+            # Create a blob object and get its hash
             hash_val = objects.hash_object(repo_root, content, 'blob')
             
-                        # Update the index
-
-            index[rel_path] = hash_val
+            # Update the index
+            index[rel_path] = (hash_val, mtime, size)
             print(f"Added '{rel_path}' to the index.")
 
         except Exception as e:
             print(f"Error adding file {file_path}: {e}", file=sys.stderr)
 
     # Write the updated index back to the file
-
     try:
         with open(index_path, 'w') as f:
-            for path, hash_val in sorted(index.items()):
-                f.write(f"{hash_val} {path}\n")
+            for path, (hash_val, mtime, size) in sorted(index.items()):
+                f.write(f"{hash_val} {mtime} {size} {path}\n")
     except Exception as e:
         print(f"Error writing to index: {e}", file=sys.stderr)
         sys.exit(1)
