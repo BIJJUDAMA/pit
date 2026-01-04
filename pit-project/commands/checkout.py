@@ -1,3 +1,14 @@
+# The command: pit checkout [-b] <branch-name> | <file>...
+# What it does: Switches branches (updating HEAD, index, and working directory) or restores files. Supports creating a new branch with -b.
+# How it does:
+#   - Checks for a dirty working tree (uncommitted changes) and aborts if unsafe.
+#   - If -b is present, creates a new branch ref pointing to current HEAD.
+#   - Swaps the working directory files to match the target commit tree (creates, updates, deletes).
+#   - Rewrites the .pit/index to match the target commit.
+#   - Updates .pit/HEAD to point to the new branch.
+# What data structure it uses:
+#   - Dictionary/Hash Table: For loading the index and commit trees ({path: hash}) to efficiently compare differences (O(1) lookups).
+#   - Set: To compute file differences (additions, deletions) between current and target trees using set operations (difference, intersection) in O(N).
 
 import sys
 import os
