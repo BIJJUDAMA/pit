@@ -20,12 +20,15 @@ def run(args):
         # Diff between HEAD commit and index
         head_commit = repository.get_head_commit(repo_root)
         files1 = objects.get_commit_files(repo_root, head_commit) if head_commit else {}
-        files2 = _get_index_files(repo_root)
+        
+        index_full = _get_index_files(repo_root)
+        files2 = {path: data[0] for path, data in index_full.items()}
         from_prefix, to_prefix = "a/", "b/"
     else:
         # Diff between index and working directory
-        files1 = _get_index_files(repo_root)
-        files2 = _get_working_dir_files(repo_root)
+        index_full = _get_index_files(repo_root)
+        files1 = {path: data[0] for path, data in index_full.items()}
+        files2 = _get_working_dir_files(repo_root, index_full)
         from_prefix, to_prefix = "a/", "b/"
 
     changes = diff_utils.compare_states(files1, files2)
@@ -52,12 +55,26 @@ def _get_index_files(repo_root):
     if os.path.exists(index_path):
         with open(index_path, 'r') as f:
             for line in f:
-                hash_val, path = line.strip().split(' ', 1)
-                index_files[path] = hash_val
+                parts = line.strip().split(' ')
+                if len(parts) >= 4:
+                    # New format
+                    hash_val = parts[0]
+                    mtime = int(parts[1])
+                    size = int(parts[2])
+                    path = " ".join(parts[3:])
+                    index_files[path] = (hash_val, mtime, size)
+                else:
+                    # Old format
+                    hash_val, path = line.strip().split(' ', 1)
+                    index_files[path] = (hash_val, 0, 0)
     return index_files
 
-def _get_working_dir_files(repo_root):
+def _get_working_dir_files(repo_root, index_files=None):
     from utils import ignore  # Local import to avoid cycles
+    
+    if index_files is None:
+        index_files = {}
+        
     working_files = {}
     ignore_patterns = ignore.get_ignored_patterns(repo_root)
     for root, dirs, files in os.walk(repo_root):
@@ -67,8 +84,25 @@ def _get_working_dir_files(repo_root):
             file_path = os.path.join(root, file)
             rel_path = os.path.relpath(file_path, repo_root)
             if not ignore.is_ignored(rel_path, ignore_patterns):
-                with open(file_path, 'rb') as f:
-                    content = f.read()
-                working_files[rel_path] = objects.hash_object(repo_root, content, 'blob', write=False)
+                try:
+                    stats = os.stat(file_path)
+                    current_mtime = stats.st_mtime_ns
+                    current_size = stats.st_size
+                    
+                    # Optimization: Check if file in index matches mtime and size
+                    if rel_path in index_files:
+                        idx_hash, idx_mtime, idx_size = index_files[rel_path]
+                        if idx_mtime == current_mtime and idx_size == current_size:
+                            # File likely unchanged, use index hash
+                            working_files[rel_path] = idx_hash
+                            continue
+                    
+                    # If not matched or not in index, read and hash
+                    with open(file_path, 'rb') as f:
+                        content = f.read()
+                    working_files[rel_path] = objects.hash_object(repo_root, content, 'blob', write=False)
+                except OSError:
+                    # Handle cases where file might disappear during walk or permission denied
+                    continue
     return working_files
 

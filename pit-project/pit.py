@@ -2,7 +2,7 @@ import argparse
 from commands import (
     init, add, commit, log, status, config,
     branch, checkout, diff, merge, reset,
-    revert,
+    revert, clean,
     # remote, push, pull, clone
 )
 
@@ -80,6 +80,13 @@ def main():
     revert_parser.add_argument("commit_hash", help="The commit hash to revert.")
     revert_parser.set_defaults(func=revert.run)
 
+    # Command: clean
+    clean_parser = subparsers.add_parser("clean", help="Remove untracked files from the working tree.")
+    clean_parser.add_argument("-n", "--dry-run", action="store_true", dest="n", help="Show what would be removed.")
+    clean_parser.add_argument("-f", "--force", action="store_true", dest="f", help="Force deletion of untracked files.")
+    clean_parser.add_argument("-d", action="store_true", help="Remove untracked directories as well.")
+    clean_parser.set_defaults(func=clean.run)
+
     # # Command: remote
     # remote_parser = subparsers.add_parser("remote", help="Manage remote repositories (HTTPS only)")
     # remote_parser.add_argument("subcommand", help="Subcommand: add, remove, list, set-url")
@@ -92,9 +99,9 @@ def main():
     # push_parser.add_argument("remote", help="Remote name")
     # push_parser.add_argument("branch", help="Branch to push")
     # push_parser.add_argument("-u", "--set-upstream", action="store_true",
-    #                         help="Set upstream branch tracking")
+    # #                         help="Set upstream branch tracking")
     # push_parser.add_argument("-f", "--force", action="store_true",
-    #                         help="Force push (overwrite remote)")
+    # #                         help="Force push (overwrite remote)")
     # push_parser.set_defaults(func=push.run)
 
     # # Command: pull

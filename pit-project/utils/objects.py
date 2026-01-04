@@ -51,7 +51,15 @@ def build_tree_from_index(repo_root): # Builds a nested dictionary representing 
     if os.path.exists(index_path):
         with open(index_path, 'r') as f:
             for line in f:
-                hash_val, path = line.strip().split(' ', 1)
+                parts = line.strip().split(' ')
+                if len(parts) >= 4:
+                     # New format: hash mtime size path
+                    hash_val = parts[0]
+                    path = " ".join(parts[3:])
+                else:
+                    # Old format: hash path
+                    hash_val, path = line.strip().split(' ', 1)
+                
                 parts = path.split(os.sep)
                 current_level = tree
                 for part in parts[:-1]:
