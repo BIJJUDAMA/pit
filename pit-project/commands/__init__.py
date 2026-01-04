@@ -17,3 +17,4 @@ from . import revert
 # from . import push
 # from . import pull
 # from . import clone
+from . import stash

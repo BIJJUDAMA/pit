@@ -46,8 +46,33 @@ def read_object(repo_root, sha1): #Reads an object by its SHA-1 hash and returns
     return obj_type, content
 
 def build_tree_from_index(repo_root): # Builds a nested dictionary representing the tree structure from the index file
-    index_path = os.path.join(repo_root, '.pit', 'index')
+    index_files = read_index(repo_root)
+    return build_tree_from_dict(index_files)
+
+def build_tree_from_dict(files_dict):
+    """
+    Builds a nested dictionary representing the tree structure from a dict of {path: hash}.
+    """
     tree = {}
+    for path, hash_val in files_dict.items():
+        # Handle cases where hash might be a tuple (hash, mtime, size)
+        if isinstance(hash_val, tuple):
+            hash_val = hash_val[0]
+            
+        parts = path.split(os.sep)
+        current_level = tree
+        for part in parts[:-1]:
+            current_level = current_level.setdefault(part, {})
+        current_level[parts[-1]] = hash_val
+    return tree
+
+def read_index(repo_root):
+    """
+    Reads the index file and returns a dictionary {path: (hash, mtime, size)}.
+    If mtime/size are missing in old format, they default to 0.
+    """
+    index_path = os.path.join(repo_root, '.pit', 'index')
+    index_files = {}
     if os.path.exists(index_path):
         with open(index_path, 'r') as f:
             for line in f:
@@ -55,17 +80,15 @@ def build_tree_from_index(repo_root): # Builds a nested dictionary representing 
                 if len(parts) >= 4:
                      # New format: hash mtime size path
                     hash_val = parts[0]
+                    mtime_ns = int(parts[1])
+                    size = int(parts[2])
                     path = " ".join(parts[3:])
+                    index_files[path] = (hash_val, mtime_ns, size)
                 else:
                     # Old format: hash path
                     hash_val, path = line.strip().split(' ', 1)
-                
-                parts = path.split(os.sep)
-                current_level = tree
-                for part in parts[:-1]:
-                    current_level = current_level.setdefault(part, {})
-                current_level[parts[-1]] = hash_val
-    return tree
+                    index_files[path] = (hash_val, 0, 0)
+    return index_files
 
 def write_tree(repo_root, tree_dict): #Recursively writes a tree object from a nested dictionary and returns its hash
 
