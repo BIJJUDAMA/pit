@@ -54,33 +54,7 @@ def push(args):
     
     workdir_index = index_files.copy() # Start with index state
     
-    # Update with working directory files
-    ignore_patterns = ignore.get_ignored_patterns(repo_root)
-    for root, dirs, files in os.walk(repo_root):
-        if '.pit' in dirs:
-            dirs.remove('.pit')
-        for file in files:
-            file_path = os.path.join(root, file)
-            rel_path = os.path.relpath(file_path, repo_root)
-            
-            if ignore.is_ignored(rel_path, ignore_patterns):
-                continue
-                
-            try:
-                with open(file_path, 'rb') as f:
-                    content = f.read()
-                
-                stats = os.stat(file_path)
-                mtime = stats.st_mtime_ns
-                size = stats.st_size
-                
-                # Hash object but don't strictly need to write blob if it exists? 
-                # Actually, effectively we are 'adding' everything to this temp index.
-                # So we must write blobs for modified/new files.
-                hash_val = objects.hash_object(repo_root, content, 'blob')
-                workdir_index[rel_path] = (hash_val, mtime, size)
-            except:
-                pass
+
 
     # Handle deleted files?
     # If file is in index but not in working dir, it should be removed from workdir_index.
@@ -93,11 +67,42 @@ def push(args):
     # Standard `git stash` captures tracked files modification. 
     # Let's simplify: Capture everything currently in workdir + things in index that might be deleted in workdir.
     
-    # Revised Workdir Capture:
-    # Iterate all files in workdir -> add/update in `workdir_index`.
-    # Iterate all files in `index_files` -> if not in workdir, it's a deletion check.
-    # If file is in index but missing from disk, it implies it was deleted in workdir.
-    # The `workdir_index` should reflect that deletion (i.e., remove from dict).
+    # Updated Workdir Capture:
+    # Only capture tracked files (in HEAD) or staged files (in Index).
+    # Ignore strictly untracked files.
+    
+    # Identify tracked files
+    head_files = objects.get_commit_files(repo_root, head_commit) if head_commit else {}
+    tracked_files = set(head_files.keys()) if head_files else set()
+    staged_files = set(index_files.keys())
+    
+    ignore_patterns = ignore.get_ignored_patterns(repo_root)
+    for root, dirs, files in os.walk(repo_root):
+        if '.pit' in dirs:
+            dirs.remove('.pit')
+        for file in files:
+            file_path = os.path.join(root, file)
+            rel_path = os.path.relpath(file_path, repo_root)
+            
+            if ignore.is_ignored(rel_path, ignore_patterns):
+                continue
+
+            # Skip if not tracked and not staged
+            if rel_path not in tracked_files and rel_path not in staged_files:
+                continue
+                
+            try:
+                with open(file_path, 'rb') as f:
+                    content = f.read()
+                
+                stats = os.stat(file_path)
+                mtime = stats.st_mtime_ns
+                size = stats.st_size
+                
+                hash_val = objects.hash_object(repo_root, content, 'blob')
+                workdir_index[rel_path] = (hash_val, mtime, size)
+            except:
+                pass
     
     for path in list(workdir_index.keys()):
         full_path = os.path.join(repo_root, path)
@@ -124,31 +129,17 @@ def push(args):
     print(f"Saved working directory and index state {workdir_commit_hash[:7]}: {msg}")
     
     # 4. Reset Workspace to HEAD
-    # If no HEAD, we essentially clear everything? Or just leave it?
-    # Git stash on initial commit is tricky. Assuming valid HEAD usually.
     if head_commit:
         from commands import reset, checkout
-        # Hard reset: index = HEAD, workdir = HEAD
+        
         # 1. Update index to match HEAD
-        head_files = objects.get_commit_files(repo_root, head_commit)
         # Write head_files to index
         index_path = os.path.join(repo_root, '.pit', 'index')
         with open(index_path, 'w') as f:
             for path, hash_val in sorted(head_files.items()):
-                # We don't have mtime/size for HEAD files easily available without stat-ing checkouts? 
-                # Or just put 0.
                 f.write(f"{hash_val} 0 0 {path}\n")
         
         # 2. Update workdir to match HEAD
-        # Read all files in workdir, if not in HEAD remove?
-        # If in HEAD, restore?
-        # This is `git reset --hard`.
-        # Simplest implementation for stash: 
-        # Checkout HEAD with overwrite.
-        # Clean untracked/modified files that were stashed?
-        # The stash captured everything.
-        # We need to make workdir match HEAD.
-        
         # Restore HEAD files
         for path, hash_val in head_files.items():
             obj_type, content = objects.read_object(repo_root, hash_val)
@@ -157,26 +148,20 @@ def push(args):
             with open(full_path, 'wb') as f:
                 f.write(content)
         
-        # Remove files not in HEAD (but tracked or stashed?)
-        # For `stash`, we usually leave untracked files alone unless `-u`.
-        # Assuming standard behavior: only reset tracked files.
-        # Since we updated index to HEAD, checking `git status` would show untracked.
-        # We should remove changes to tracked files.
-        pass # The overwrite above handles modifications to tracked files.
-             # What about files added to index (newly tracked) but reset?
-             # They are in `index_files` (stashed) but not in `head_files`.
-             # We should remove them from workdir if they were tracked in the stash.
-             # But if they are just in workdir and not in HEAD, they become untracked?
-             # `git stash` removes added files from workdir.
-             
-        # Identify files in stash (workdir_index) that are NOT in HEAD.
-        # Remove them from disk?
+        # Clean up files that were stashed (modified/added) but are not in HEAD
+        # (i.e. revert changes to tracked files, and remove staged new files)
+        # Note: We must NOT delete untracked files that were NOT stashed.
+        
+        # Iterate files in workdir_index (which contains everything we stashed)
         for path in workdir_index:
              if path not in head_files:
-                 # It was added in stash (index or workdir). Removing it to clean state.
+                 # It was in the stash, but not in HEAD. It must be a file we added to index.
+                 # Since we are resetting to HEAD, we should remove it.
                  full_path = os.path.join(repo_root, path)
                  if os.path.exists(full_path):
                      os.remove(full_path)
+             # If path IS in head_files, we already overwrote it above with HEAD version.
+
                      
     else:
         # No HEAD. Stash saves everything. Reset means empty?
@@ -202,12 +187,12 @@ def pop(args):
         
     stash_commit_hash = lines[-1]
     
-    # Restore logic
-    # 1. Get stash commit (workdir)
-    # 2. Get its 2nd parent (index commit)
-    # 3. Load index commit to Index
-    # 4. Load workdir commit to Workdir
-    
+    # Overwrite Protection
+    # Check if working directory or index is dirty
+    if not _is_clean(repo_root):
+        print("error: Your local changes would be overwritten by pop.", file=sys.stderr)
+        return
+
     try:
         # Get commit object
         obj_type, content = objects.read_object(repo_root, stash_commit_hash)
@@ -224,16 +209,7 @@ def pop(args):
         else:
              index_parent = parents[1] # Parent 0 is HEAD, Parent 1 is Index Commit
 
-        # Restore Index
-        if index_parent:
-            index_files = objects.get_commit_files(repo_root, index_parent)
-            index_path = os.path.join(repo_root, '.pit', 'index')
-            with open(index_path, 'w') as f:
-                for path, hash_val in sorted(index_files.items()):
-                    f.write(f"{hash_val} 0 0 {path}\n")
-
         # Restore WorkDir
-        # Read files from stash_commit_hash
         workdir_files = objects.get_commit_files(repo_root, stash_commit_hash)
         for path, hash_val in workdir_files.items():
             obj_type, content = objects.read_object(repo_root, hash_val)
@@ -241,7 +217,29 @@ def pop(args):
             os.makedirs(os.path.dirname(full_path), exist_ok=True)
             with open(full_path, 'wb') as f:
                 f.write(content)
-        
+
+        # Restore Index
+        # We need to build the index dictionary.
+        # While building, if the file content in index matches workdir, we grab the stat from disk.
+        if index_parent:
+            index_files = objects.get_commit_files(repo_root, index_parent)
+            index_path = os.path.join(repo_root, '.pit', 'index')
+            with open(index_path, 'w') as f:
+                for path, hash_val in sorted(index_files.items()):
+                    # Check if file on disk matches hash (implicit via hash match)
+                    mtime = 0
+                    size = 0
+                    
+                    if path in workdir_files and workdir_files[path] == hash_val:
+                        # Content matches! Use real stats.
+                        full_path = os.path.join(repo_root, path)
+                        if os.path.exists(full_path):
+                            stats = os.stat(full_path)
+                            mtime = stats.st_mtime_ns
+                            size = stats.st_size
+                            
+                    f.write(f"{hash_val} {mtime} {size} {path}\n")
+
         # Remove from log
         lines.pop()
         with open(log_path, 'w') as f:
@@ -252,6 +250,50 @@ def pop(args):
     except Exception as e:
          print(f"Error popping stash: {e}")
          sys.exit(1)
+
+def _is_clean(repo_root):
+    from utils import diff as diff_utils
+    
+    # Check HEAD vs Index
+    head_commit = repository.get_head_commit(repo_root)
+    files1_head = objects.get_commit_files(repo_root, head_commit) if head_commit else {}
+    
+    index_full = objects.read_index(repo_root)
+    files2_idx = {path: data[0] for path, data in index_full.items()}
+    
+    staged = diff_utils.compare_states(files1_head, files2_idx)
+    if any(staged.values()):
+        return False
+        
+    # Check Index vs Workdir
+    # Reuse diff._get_working_dir_files? Or status logic.
+    # Let's import from COMMANDS.diff is tricky due to circular imports potential.
+    # Re-implement simple logic or import cautiously. 
+    # Actually stash.py imports utils.objects.
+    # Let's import diff logic from commands.diff if possible or copy `_get_working_dir_files`.
+    # Copying _get_working_dir_files logic is safer to avoid circular dep with commands module structure.
+    
+    working_files = {}
+    ignore_patterns = ignore.get_ignored_patterns(repo_root)
+    for root, dirs, files in os.walk(repo_root):
+        if '.pit' in dirs:
+            dirs.remove('.pit')
+        for file in files:
+            path = os.path.relpath(os.path.join(root, file), repo_root)
+            if not ignore.is_ignored(path, ignore_patterns):
+                 try:
+                    with open(os.path.join(root, file), 'rb') as f:
+                         content = f.read()
+                    working_files[path] = objects.hash_object(repo_root, content, 'blob', write=False)
+                 except: pass
+                 
+    unstaged = diff_utils.compare_states(files2_idx, working_files)
+    if any(unstaged['modified']) or any(unstaged['deleted']):
+        # Note: untracked files (new file in unstaged) usually don't block pop in git unless they conflict.
+        # Provide strict safety: if ANY modified/deleted, abort.
+        return False
+        
+    return True
 
 def list_stashes(args):
     repo_root = repository.find_repo_root()
