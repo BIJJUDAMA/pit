@@ -56,6 +56,7 @@ def main():
     #Command: checkout
     checkout_parser = subparsers.add_parser("checkout", help="Switch branches or restore working tree files.")
     checkout_parser.add_argument("targets", nargs="+", help="Branch name to switch to, or file(s) to restore from index.")
+    checkout_parser.add_argument("-b", "--branch", action="store_true", help="Create a new branch and switch to it.")
     checkout_parser.set_defaults(func=checkout.run)
     
 
