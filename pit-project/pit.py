@@ -1,4 +1,8 @@
 import argparse
+import sys
+import shlex
+from utils.config import read_config
+
 from commands import (
     init, add, commit, log, status, config,
     branch, checkout, diff, merge, reset,
@@ -7,6 +11,35 @@ from commands import (
 
 # The main entry point for the Pit version control system
 def main():
+    # Handle aliases
+    if len(sys.argv) > 1:
+        potential_alias = sys.argv[1]
+        # Skip if it's a known command to avoid overhead/conflict, OR just always check config
+        # The prompt says: "check the [alias] section of the config before parsing standard commands."
+        # If I check config first, I can override standard commands maybe? 
+        # Usually aliases shouldn't shadow commands, but checking config first is what was asked.
+        # However, checking if it is NOT a known command first is safer to prevent accidental shadowing?
+        # Prompt: "If the first argument is not a known command, check .pit/options (or config dictionary) for alias.<cmd>."
+        
+        # known commands list from the subparsers? subparsers are defined later.
+        # I can list them manually or just try to load config.
+        # Let's list known commands.
+        known_commands = {
+            "init", "add", "commit", "log", "status", "config",
+            "branch", "checkout", "diff", "merge", "reset",
+            "revert", "clean", "stash", "tag"
+        }
+        
+        if potential_alias not in known_commands:
+            cfg = read_config()
+            if cfg.has_option('alias', potential_alias):
+                alias_value = cfg.get('alias', potential_alias)
+                # Split the alias value (e.g., "log --oneline")
+                alias_args = shlex.split(alias_value)
+                # Replace the alias in sys.argv
+                sys.argv[1:2] = alias_args
+                # sys.argv will be used by parse_args() automatically
+
     # The main parser
     parser = argparse.ArgumentParser(description="Pit: A simple version control system.")
     subparsers = parser.add_subparsers(dest="command", help="Available commands", required=True)
