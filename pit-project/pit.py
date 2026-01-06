@@ -6,7 +6,7 @@ from utils.config import read_config
 from commands import (
     init, add, commit, log, status, config,
     branch, checkout, diff, merge, reset,
-    revert, clean,
+    revert, clean, mergetool, difftool,
     # remote, push, pull, clone
 )
 
@@ -97,6 +97,15 @@ def main():
     diff_parser = subparsers.add_parser("diff", help="Show changes between index and working tree.")
     diff_parser.add_argument("--staged", action="store_true", help="Show changes between the index and the last commit.")
     diff_parser.set_defaults(func=diff.run)
+
+    # Command: difftool
+    difftool_parser = subparsers.add_parser("difftool", help="Show changes using external diff tool.")
+    difftool_parser.add_argument("--staged", action="store_true", help="Show changes between the index and the last commit.")
+    difftool_parser.set_defaults(func=difftool.run)
+
+    # Command: mergetool
+    mergetool_parser = subparsers.add_parser("mergetool", help="Resolve merge conflicts using external merge tool.")
+    mergetool_parser.set_defaults(func=mergetool.run)
 
     # Command: merge
     merge_parser = subparsers.add_parser("merge", help="Merge a branch into the current branch.")

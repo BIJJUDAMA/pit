@@ -159,8 +159,15 @@ def load_index(repo_root):
     if os.path.exists(index_path):
         with open(index_path, 'r') as f:
             for line in f:
-                hash_val, path = line.strip().split(' ', 1)
-                index_files[path] = hash_val
+                parts = line.strip().split(' ')
+                if len(parts) >= 4:
+                    # New format: hash mtime size path
+                    path = " ".join(parts[3:])
+                    index_files[path] = parts[0]
+                else:
+                    # Old format: hash path
+                    hash_val, path = line.strip().split(' ', 1)
+                    index_files[path] = hash_val
     return index_files
 
 def update_working_directory(repo_root, current_files, target_files):
@@ -209,12 +216,13 @@ def update_index(repo_root, target_files):
     index_path = os.path.join(repo_root, '.pit', 'index')
     with open(index_path, 'w') as f:
         for rel_path, sha1 in sorted(target_files.items()):
-            f.write(f"{sha1} {rel_path}\n")
+            # Write new format with 0 for mtime/size (forces refresh)
+            f.write(f"{sha1} 0 0 {rel_path}\n")
 
 def handle_file_restore(repo_root, targets):
     # Existing file checkout logic (Refactored)
     print("Restoring file(s) from index...")
-    index_files = load_index(repo_root)
+    index_files = load_index(repo_root) # Now returns {path: hash} correctly
     files_restored = 0
     errors_occurred = 0
     
