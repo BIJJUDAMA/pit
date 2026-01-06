@@ -2,7 +2,7 @@ import argparse
 from commands import (
     init, add, commit, log, status, config,
     branch, checkout, diff, merge, reset,
-    revert, tag
+    revert, clean, stash, tag
     # remote, push, pull, clone
 )
 
@@ -56,6 +56,7 @@ def main():
     #Command: checkout
     checkout_parser = subparsers.add_parser("checkout", help="Switch branches or restore working tree files.")
     checkout_parser.add_argument("targets", nargs="+", help="Branch name to switch to, or file(s) to restore from index.")
+    checkout_parser.add_argument("-b", "--branch", action="store_true", help="Create a new branch and switch to it.")
     checkout_parser.set_defaults(func=checkout.run)
     
 
@@ -78,6 +79,19 @@ def main():
     revert_parser = subparsers.add_parser("revert", help="Revert an existing commit.")
     revert_parser.add_argument("commit_hash", help="The commit hash to revert.")
     revert_parser.set_defaults(func=revert.run)
+
+    # Command: clean
+    clean_parser = subparsers.add_parser("clean", help="Remove untracked files from the working tree.")
+    clean_parser.add_argument("-n", "--dry-run", action="store_true", dest="n", help="Show what would be removed.")
+    clean_parser.add_argument("-f", "--force", action="store_true", dest="f", help="Force deletion of untracked files.")
+    clean_parser.add_argument("-d", action="store_true", help="Remove untracked directories as well.")
+    clean_parser.set_defaults(func=clean.run)
+
+    # Command: stash
+    stash_parser = subparsers.add_parser("stash", help="Stash the changes in a dirty working directory away.")
+    stash_parser.add_argument("action", nargs="?", choices=["push", "list", "pop", "show", "drop", "clear"], default="push", help="The action to perform (push, list, pop, show, drop, clear)")
+    stash_parser.add_argument("stash_arg", nargs="?", help="Stash index (e.g. stash@{0}) or message for push")
+    stash_parser.set_defaults(func=stash.run)
 
     # # Command: remote
     # remote_parser = subparsers.add_parser("remote", help="Manage remote repositories (HTTPS only)")

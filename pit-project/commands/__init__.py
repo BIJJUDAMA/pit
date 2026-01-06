@@ -13,8 +13,10 @@ from . import diff
 from . import merge
 from . import reset
 from . import revert
+from . import clean
 # from . import remote
 # from . import push
 # from . import pull
 # from . import clone
+from . import stash
 from . import tag

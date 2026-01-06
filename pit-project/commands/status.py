@@ -25,8 +25,15 @@ def run(args): #Compares the HEAD, index, and working directory states and print
     if os.path.exists(index_path):
         with open(index_path, 'r') as f:
             for line in f:
-                hash_val, path = line.strip().split(' ', 1)
-                index_files[path] = hash_val
+                parts = line.strip().split(' ')
+                if len(parts) >= 4:
+                    # New format: hash mtime size path
+                    hash_val = parts[0]
+                    path = " ".join(parts[3:])
+                    index_files[path] = hash_val
+                else:
+                    hash_val, path = line.strip().split(' ', 1)
+                    index_files[path] = hash_val
 
     # Get status of Index vs Working Directory (unstaged changes)
     working_files = {}
