@@ -62,3 +62,16 @@ def get_branch_commit(repo_root, branch_name): # Retrieves the commit hash that 
         return None
     with open(branch_path, 'r') as f:
         return f.read().strip()
+
+def get_all_tags(repo_root): # Lists all tag names by reading the refs/tags directory
+    tags_dir = os.path.join(repo_root, '.pit', 'refs', 'tags')
+    if not os.path.isdir(tags_dir):
+        return []
+    return [name for name in os.listdir(tags_dir) if not name.startswith('.')]
+
+def get_tag_commit(repo_root, tag_name): # Retrieves the commit hash that a given tag points to
+    tag_path = os.path.join(repo_root, '.pit', 'refs', 'tags', tag_name)
+    if not os.path.exists(tag_path):
+        return None
+    with open(tag_path, 'r') as f:
+        return f.read().strip()

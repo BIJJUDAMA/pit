@@ -42,6 +42,31 @@ def run(args):
                 sys.exit(1)
             return # Branch checkout successful
 
+    # Check if a tag
+    target_name = targets[0]
+    tags = repository.get_all_tags(repo_root)
+    if len(targets) == 1 and target_name in tags:
+        try:
+            commit_hash = repository.get_tag_commit(repo_root, target_name)
+            head_path = os.path.join(repo_root, '.pit', 'HEAD')
+            
+            # Detached HEAD state
+            with open(head_path, 'w') as f:
+                f.write(commit_hash)
+            
+            # Note: checkout.py currently does NOT update working directory.
+            # This is a limitation of the current checkout implementation.
+                
+            print(f"Note: checking out '{target_name}'.")
+            print("\nYou are in 'detached HEAD' state. You can look around, make experimental")
+            print("changes and commit them, and you can discard any commits you make in this")
+            print("state without impacting any branches by switching back to a branch.")
+            print(f"\nHEAD is now at {commit_hash[:7]}")
+        except Exception as e:
+             print(f"Error checking out tag: {e}", file=sys.stderr)
+             sys.exit(1)
+        return
+
     # If not a single branch, assume it's one or more file paths 
     print("Restoring file(s) from index...")
     index_path = os.path.join(repo_root, '.pit', 'index')
