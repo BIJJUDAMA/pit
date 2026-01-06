@@ -43,8 +43,8 @@ def write_config(key, value): # Sets a configuration key to a value and writes i
         raise FileNotFoundError("Not a Pit repository.")
 
     config_path = get_config_path(repo_root)
-os.makedirs(os.path.dirname(config_path), exist_ok=True)
-config = configparser.ConfigParser()
+    os.makedirs(os.path.dirname(config_path), exist_ok=True)
+    config = configparser.ConfigParser()
 
     if os.path.exists(config_path):
         config.read(config_path)

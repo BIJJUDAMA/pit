@@ -146,6 +146,11 @@ def _perform_three_way_merge(repo_root, ancestor_hash, head_hash, merge_hash):
                 hash_val, path = line.strip().split(' ', 1)
                 current_index[path] = hash_val
     
+    # Write MERGE_HEAD for mergetool context
+    merge_head_path = os.path.join(repo_root, '.pit', 'MERGE_HEAD')
+    with open(merge_head_path, 'w') as f:
+        f.write(merge_hash)
+
     # Process each file for three-way merge
     for file_path in sorted(all_files):
         ancestor_hash = ancestor_files.get(file_path)
@@ -169,6 +174,14 @@ def _perform_three_way_merge(repo_root, ancestor_hash, head_hash, merge_hash):
         print("\nAutomatic merge failed; fix conflicts and then commit the result.")
         return False
     
+    # If successful, remove MERGE_HEAD logic could be here, but usually it's removed after commit. 
+    # For now we leave it so 'pit commit' can theoretically clean it up, or typical usage flows.
+    # Actually, if we return True, the main run function creates a commit.
+    # We should clean it up there? Or just let it be overwritten next time. 
+    # Git cleans MERGE_HEAD after successful commit.
+    if os.path.exists(merge_head_path):
+        os.remove(merge_head_path)
+
     # Write the merged index
     with open(index_path, 'w') as f:
         for path, hash_val in sorted(current_index.items()):
