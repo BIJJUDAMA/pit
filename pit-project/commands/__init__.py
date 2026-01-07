@@ -19,3 +19,4 @@ from . import clean
 # from . import pull
 # from . import clone
 from . import stash
+from . import tag
