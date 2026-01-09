@@ -53,10 +53,15 @@ def create_commit(repo_root, message, parents): # Creates a commit object and up
     commit_hash = objects.hash_object(repo_root, commit_content, 'commit')
     
     current_branch = repository.get_current_branch(repo_root)
-    branch_ref_path = os.path.join(repo_root, '.pit', 'refs', 'heads', current_branch)
-    
-    with open(branch_ref_path, 'w') as f:
-        f.write(f"{commit_hash}\n")
+    if current_branch:
+        branch_ref_path = os.path.join(repo_root, '.pit', 'refs', 'heads', current_branch)
+        with open(branch_ref_path, 'w') as f:
+            f.write(f"{commit_hash}\n")
+    else:
+        # Detached HEAD - update HEAD file directly
+        head_path = os.path.join(repo_root, '.pit', 'HEAD')
+        with open(head_path, 'w') as f:
+            f.write(f"{commit_hash}\n")
         
     print(f"[{current_branch} {commit_hash[:7]}] {message.splitlines()[0]}")
     
