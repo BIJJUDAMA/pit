@@ -6,7 +6,7 @@ from utils.config import read_config
 from commands import (
     init, add, commit, log, status, config,
     branch, checkout, diff, merge, reset,
-    revert, clean, mergetool, difftool, cherry_pick,
+    revert, clean, rebase, mergetool, difftool, cherry_pick,
     # remote, push, pull, clone
 )
 
@@ -133,6 +133,13 @@ def main():
     clean_parser.add_argument("-f", "--force", action="store_true", dest="f", help="Force deletion of untracked files.")
     clean_parser.add_argument("-d", action="store_true", help="Remove untracked directories as well.")
     clean_parser.set_defaults(func=clean.run)
+
+    # Command: rebase
+    rebase_parser = subparsers.add_parser("rebase", help="Reapply commits on top of another base tip.")
+    rebase_parser.add_argument("upstream", nargs="?", help="Upstream branch to rebase onto.")
+    rebase_parser.add_argument("--continue", action="store_true", dest="cont", help="Continue the rebase after resolving conflicts.")
+    rebase_parser.add_argument("--abort", action="store_true", help="Abort the rebase and return to original state.")
+    rebase_parser.set_defaults(func=rebase.run)
 
     # # Command: remote
     # remote_parser = subparsers.add_parser("remote", help="Manage remote repositories (HTTPS only)")
