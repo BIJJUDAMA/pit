@@ -63,7 +63,6 @@ def _start_rebase(repo_root, upstream_name):
     
     if not commits_to_replay:
         print(f"Current branch {current_branch} is up to date with {upstream_name}.", file=sys.stderr)
-        # Fast-forward check could be here, but for now we just say up to date or do nothing if already contained
         sys.exit(0)
 
     print(f"First, rewinding head to replay your work on top of it...")
@@ -92,25 +91,13 @@ def _handle_continue(repo_root):
         print("fatal: No rebase in progress?", file=sys.stderr)
         sys.exit(1)
 
-    # Verify conflict is resolved (simplified: check if index clean-ish or MERGE_HEAD gone?)
-    # Usually we check if user staged the changes.
-    # Assuming user ran 'pit add'.
-    
-    # We need to commit the current changes (the resolved conflict)
-    # But wait, 'pit commit' creates a commit. If user ran 'pit commit', they created a commit.
-    # If they just ran 'pit add', we need to create the commit for them using the original message.
-    
-    # Load state to get the commit message we were trying to play
+    # Load state
     next_commit = _read_next_commit(repo_root)
     if not next_commit:
         print("No commits left to apply? finishing...", file=sys.stderr)
         _finish_rebase(repo_root)
         return
 
-    # Check if we need to synthesize a commit
-    # If HEAD has moved since we stopped, maybe user committed?
-    # Simple logic: We assume user `added` files and we need to `commit` now.
-    
     commit_data = _get_commit_data(repo_root, next_commit)
     
     # Create the commit for the resolved conflict
@@ -178,6 +165,10 @@ def _replay_loop(repo_root):
         print(f"Applying: {msg_title}")
         
         base_hash = commit_data['parent']
+        # If it's a merge commit or complex history, parent selection is tricky.
+        # But for rebase, we simplify: we are rebasing onto new base.
+        # The 'base' needed for 3-way merge is the commit's ORIGINAL parent.
+        
         current_head = repository.get_head_commit(repo_root)
         
         # Perform 3-way merge
@@ -228,50 +219,81 @@ def _finish_rebase(repo_root):
 
 
 def _collect_commits_to_replay(repo_root, head, upstream):
-    # Reachable from HEAD
+    # 1. Reachable from HEAD (Set A)
     head_reachable = _get_reachable_commits(repo_root, head)
-    # Reachable from Upstream
+    # 2. Reachable from Upstream (Set B)
     upstream_reachable = _get_reachable_commits(repo_root, upstream)
     
-    # Difference (A - B)
-    to_replay = head_reachable - upstream_reachable
+    # 3. Difference (A - B) -> Commits unique to feature branch
+    to_replay_set = head_reachable - upstream_reachable
     
-    # Sort by commit time or topology?
-    # Simple topology sort: List parents before children.
-    # Since we have the hashes, we can reconstruct the order.
-    # Or just walk back from HEAD and filter.
-    
-    ordered_commits = []
-    curr = head
-    while curr:
-        if curr in to_replay:
-            ordered_commits.append(curr)
+    if not to_replay_set:
+        return []
         
-        parents = _get_parents(repo_root, curr)
-        if not parents:
-            break
-        curr = parents[0] # Simplification for linear sort of verify
-        
-        # Better: Since to_replay is a set, we want the subset of history.
-        # But 'commits_to_replay' needs correct order.
-        # If we just reverse the list of (HEAD..LCA), it works for linear.
-        # For non-linear, rebase linearizes it anyway.
+    # 4. Topological Sort (Kahn's Algorithm)
+    # We want to order them such that parents come before children.
+    # In topological sort terms, if A is parent of B, A -> B dependency.
     
-    ordered_commits.reverse()
-    return ordered_commits
-
+    # Filter out merge commits (linearize history)
+    linear_set = set()
+    for c in to_replay_set:
+        if len(_get_parents(repo_root, c)) <= 1:
+            linear_set.add(c)
+            
+    return _topological_sort(repo_root, linear_set)
 
 def _get_reachable_commits(repo_root, start_commit):
+    from collections import deque
+    if not start_commit:
+        return set()
+        
     reachable = set()
-    queue = [start_commit]
+    queue = deque([start_commit])
+    
     while queue:
-        curr = queue.pop(0)
+        curr = queue.popleft() # O(1)
         if curr in reachable:
             continue
         reachable.add(curr)
+        
         parents = _get_parents(repo_root, curr)
-        queue.extend(parents)
+        for p in parents:
+            if p not in reachable:
+                queue.append(p)
+                
     return reachable
+
+def _topological_sort(repo_root, commit_set):
+    # Build adjacency list: parent -> [children] (within set)
+    adj = {c: [] for c in commit_set}
+    in_degree = {c: 0 for c in commit_set}
+    
+    # Populate graph
+    from collections import deque
+    
+    for commit in commit_set:
+        parents = _get_parents(repo_root, commit)
+        for p in parents:
+            if p in commit_set:
+                adj[p].append(commit) # p is parent of commit
+                in_degree[commit] += 1
+                
+    # Queue for Kahn's (commits with 0 in-degree: no parents in set -> oldest)
+    queue = deque([c for c in commit_set if in_degree[c] == 0])
+    sorted_result = []
+    
+    while queue:
+        node = queue.popleft()
+        sorted_result.append(node)
+        
+        for child in adj[node]:
+            in_degree[child] -= 1
+            if in_degree[child] == 0:
+                queue.append(child)
+                
+    # If len(sorted_result) != len(commit_set), we have a cycle or issue
+    # For Git DAG, cycles shouldn't exist.
+    return sorted_result
 
 
 def _save_rebase_state(repo_root, branch_name, commits):
