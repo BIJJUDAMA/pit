@@ -11,7 +11,7 @@
 
 import sys
 import os
-from utils import repository, objects
+from utils import repository, objects, ignore
 from commands import commit
 # Import internal three-way merge logic from merge.py
 from commands.merge import _perform_three_way_merge, _get_commit_parents
@@ -21,6 +21,11 @@ def run(args):
     repo_root = repository.find_repo_root()
     if not repo_root:
         print("fatal: not a pit repository", file=sys.stderr)
+        sys.exit(1)
+    #safety check:ensure working directory and index are clean
+    if not _is_clean(repo_root):
+        print("error: your local changes would be overwritten by cherry-pick.", file=sys.stderr)
+        print("hint: commit your changes or stash them before you cherry-pick.", file=sys.stderr)
         sys.exit(1)
 
     try:
@@ -154,3 +159,59 @@ def _get_commit_metadata(repo_root, commit_hash):
             
     data['message'] = '\n'.join(msg_lines)
     return data
+
+def _is_clean(repo_root):
+    """Checks if there are any staged or unstaged changes in the repository."""
+    # 1. Compare HEAD vs Index (Staged changes)
+    head_commit = repository.get_head_commit(repo_root)
+    head_files = objects.get_commit_files(repo_root, head_commit) if head_commit else {}
+    index_files = _load_index(repo_root)
+    
+    if head_files != index_files:
+        return False
+        
+    # 2. Compare Index vs Working Directory (Unstaged changes)
+    ignore_patterns = ignore.get_ignored_patterns(repo_root)
+    for root, dirs, files in os.walk(repo_root):
+        if '.pit' in dirs:
+            dirs.remove('.pit')
+            
+        for file in files:
+            file_path = os.path.join(root, file)
+            rel_path = os.path.relpath(file_path, repo_root)
+            
+            if ignore.is_ignored(rel_path, ignore_patterns):
+                continue
+            
+            # We only care about tracked files for cleanliness in this context
+            if rel_path in index_files:
+                with open(file_path, 'rb') as f:
+                    content = f.read()
+                current_hash = objects.hash_object(repo_root, content, 'blob', write=False)
+                if current_hash != index_files[rel_path]:
+                    return False
+                    
+    # 3. Check for files in index missing from working directory
+    for rel_path in index_files:
+        if not os.path.exists(os.path.join(repo_root, rel_path)):
+            return False
+            
+    return True
+
+def _load_index(repo_root):
+    """Loads the index file and returns a mapping of {path: hash}."""
+    index_path = os.path.join(repo_root, '.pit', 'index')
+    index_files = {}
+    if os.path.exists(index_path):
+        with open(index_path, 'r') as f:
+            for line in f:
+                parts = line.strip().split(' ')
+                if len(parts) >= 4:
+                    # New format: hash mtime size path
+                    path = " ".join(parts[3:])
+                    index_files[path] = parts[0]
+                else:
+                    # Old format: hash path
+                    hash_val, path = line.strip().split(' ', 1)
+                    index_files[path] = hash_val
+    return index_files
