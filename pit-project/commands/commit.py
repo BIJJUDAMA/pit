@@ -63,6 +63,7 @@ def create_commit(repo_root, message, parents): # Creates a commit object and up
         with open(head_path, 'w') as f:
             f.write(f"{commit_hash}\n")
         
-    print(f"[{current_branch} {commit_hash[:7]}] {message.splitlines()[0]}")
+    ref_name = current_branch if current_branch else 'detached HEAD'
+    print(f"[{ref_name} {commit_hash[:7]}] {message.splitlines()[0]}")
     
     return commit_hash
