@@ -6,7 +6,7 @@ from utils.config import read_config
 from commands import (
     init, add, commit, log, status, config,
     branch, checkout, diff, merge, reset,
-    revert, clean, rebase, mergetool, difftool,
+    revert, clean, rebase, mergetool, difftool, cherry_pick,
     # remote, push, pull, clone
 )
 
@@ -28,7 +28,7 @@ def main():
         known_commands = {
             "init", "add", "commit", "log", "status", "config",
             "branch", "checkout", "diff", "merge", "reset",
-            "revert", "clean", "stash", "tag"
+            "revert", "clean", "stash", "tag", "cherry-pick"
         }
         
         if potential_alias not in known_commands:
@@ -121,6 +121,11 @@ def main():
     revert_parser = subparsers.add_parser("revert", help="Revert an existing commit.")
     revert_parser.add_argument("commit_hash", help="The commit hash to revert.")
     revert_parser.set_defaults(func=revert.run)
+
+    # Command: cherry-pick
+    cherry_pick_parser = subparsers.add_parser("cherry-pick", help="Apply the changes introduced by some existing commits")
+    cherry_pick_parser.add_argument("commit", help="The commit to cherry-pick")
+    cherry_pick_parser.set_defaults(func=cherry_pick.run)
 
     # Command: clean
     clean_parser = subparsers.add_parser("clean", help="Remove untracked files from the working tree.")

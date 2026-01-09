@@ -21,3 +21,4 @@ from . import difftool
 # from . import pull
 # from . import clone
 from . import stash
+from . import cherry_pick
