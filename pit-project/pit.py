@@ -131,7 +131,9 @@ def main():
 
     # Command: rebase
     rebase_parser = subparsers.add_parser("rebase", help="Reapply commits on top of another base tip.")
-    rebase_parser.add_argument("upstream", help="Upstream branch to rebase onto.")
+    rebase_parser.add_argument("upstream", nargs="?", help="Upstream branch to rebase onto.")
+    rebase_parser.add_argument("--continue", action="store_true", dest="cont", help="Continue the rebase after resolving conflicts.")
+    rebase_parser.add_argument("--abort", action="store_true", help="Abort the rebase and return to original state.")
     rebase_parser.set_defaults(func=rebase.run)
 
     # # Command: remote
