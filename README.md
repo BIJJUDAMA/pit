@@ -14,143 +14,63 @@ Pit is built on the same three fundamental ideas that power Git:
 
 ### Basic Commands
 
-| Command | Description |
-|---------|-------------|
-| `pit init` | Initialize a new repository |
-| `pit config user.name "Name"` | Set user name |
-| `pit config user.email "email"` | Set user email |
-| `pit add <file>` | Stage files for commit |
-| `pit add .` | Stage all files in current directory |
-| `pit commit -m "message"` | Create a commit |
-| `pit status` | Show working directory status |
-| `pit log` | Show commit history |
-| `pit log --oneline` | Compact commit history |
-| `pit log --graph` | Visualize branch history |
-| `pit log --grep "pattern"` | Filter commits by message |
-| `pit log --since "2 days ago"` | Filter commits by date |
-| `pit log --patch <file>` | Show file changes in commits |
+- `pit init` - Initialize a new repository
+- `pit config user.name "Name"` - Set user name
+- `pit config user.email "email"` - Set user email
+- `pit add <file>` - Stage files for commit
+- `pit commit -m "message"` - Create a commit
+- `pit status` - Show working directory status
+- `pit log` - Show commit history
+- `pit log --oneline` - Compact commit history
+- `pit log --graph` - Visualize branch history
 
 ### Branching & Merging
 
-| Command | Description |
-|---------|-------------|
-| `pit branch` | List all branches |
-| `pit branch <name>` | Create new branch |
-| `pit checkout <branch>` | Switch branches |
-| `pit checkout -b <branch>` | Create and switch to new branch |
-| `pit merge <branch>` | Merge branches (three-way merge) |
-| `pit rebase <upstream>` | Reapply commits on new base |
-| `pit rebase --continue` | Continue after conflict resolution |
-| `pit rebase --abort` | Abort rebase and restore state |
-| `pit revert <commit>` | Create commit that undoes changes |
-
-### Stash
-
-| Command | Description |
-|---------|-------------|
-| `pit stash` | Save working directory state |
-| `pit stash push -m "message"` | Save with message |
-| `pit stash pop` | Restore most recent stash |
-| `pit stash list` | List all stashes |
-| `pit stash clear` | Remove all stashes |
+- `pit branch` - List branches
+- `pit branch <name>` - Create new branch
+- `pit checkout <branch>` - Switch branches
+- `pit merge <branch>` - Merge branches (three-way merge)
+- `pit revert <commit>` - Revert a commit
 
 ### Comparison & Inspection
 
-| Command | Description |
-|---------|-------------|
-| `pit diff` | Show unstaged changes |
-| `pit diff --staged` | Show staged changes |
-| `pit difftool` | Open external diff tool |
-| `pit difftool --staged` | Diff staged changes in external tool |
-
-### Workspace Management
-
-| Command | Description |
-|---------|-------------|
-| `pit reset <file>` | Unstage files |
-| `pit checkout <file>` | Restore file from index |
-| `pit clean` | Preview untracked files to remove |
-| `pit clean -n` | Dry-run (show what would be removed) |
-| `pit clean -f` | Force delete untracked files |
-| `pit clean -d` | Also remove untracked directories |
-
-### Conflict Resolution
-
-| Command | Description |
-|---------|-------------|
-| `pit mergetool` | Open external merge tool for conflicts |
+- `pit diff` - Show unstaged changes
+- `pit diff --staged` - Show staged changes
+- `pit reset <file>` - Unstage files
+- `pit checkout <file>` - Discard changes in working directory (restore file from index)
 
 ## Example Workflow
 
 ```bash
-# Initialize a new repository
+# Initialize repository and set user
 pit init
+pit config user.name "Test"
+pit config user.email "test@example.com"
 
-# Configure user identity
-pit config user.name "Developer"
-pit config user.email "dev@example.com"
-
-# Create initial files
+# Create initial files and commit
 echo "# My Project" > README.md
 mkdir src
 echo "print('hello')" > src/main.py
-
-# Stage all files
 pit add .
-
-# Check what's staged
-pit status
-
-# Commit changes
 pit commit -m "Initial project structure"
 
-# View commit history
+# Check status and view history
+pit status
 pit log
-pit log --oneline
-pit log --graph
 
-# List branches
-pit branch
-
-# Create a new branch
+# Create and switch to feature branch
 pit branch feature-auth
-
-# Switch to the new branch
 pit checkout feature-auth
 
-# Or create and switch in one command
-pit checkout -b feature-login
-
-# Make changes to a file
-echo "def login(): pass" > src/auth.py
-
-# View unstaged changes
-pit diff
-
-# Stage the file
+# Develop feature
+echo "def authenticate():" > src/auth.py
+echo "    return True" >> src/auth.py
 pit add src/auth.py
-
-# View staged changes
-pit diff --staged
-
-# Commit
 pit commit -m "Add authentication module"
 
-# Make a change and stage it
-echo "temporary" > temp.txt
-pit add temp.txt
-
-# Unstage the file (keep working directory)
-pit reset temp.txt
-
-# Restore file from index (discard changes)
-pit checkout temp.txt
-
-# Switch back to master
+# Switch back to main and make changes
 pit checkout master
-
-# Make changes on master
-echo "Updated docs" >> README.md
+echo "Updated documentation" >> README.md
 pit add README.md
 pit commit -m "Update README"
 
@@ -160,104 +80,35 @@ pit merge feature-auth
 # View merge history
 pit log --graph
 
-# Create conflicting changes
-pit branch conflict-test
-pit checkout conflict-test
-echo "version A" > conflict.txt
+# Create conflict scenario
+pit branch conflict-branch
+pit checkout conflict-branch
+echo "conflict version A" > conflict.txt
 pit add conflict.txt
 pit commit -m "Add conflict file A"
 
 pit checkout master
-echo "version B" > conflict.txt
+echo "conflict version B" > conflict.txt
 pit add conflict.txt
 pit commit -m "Add conflict file B"
 
 # Attempt merge (will show conflicts)
-pit merge conflict-test
+pit merge conflict-branch
 
-# Open merge tool to resolve
-pit mergetool
+# View differences
+pit diff
+pit diff --staged
 
-# After resolving, commit the merge
-pit add conflict.txt
-pit commit -m "Resolve merge conflict"
+# Test reset command
+echo "new file to reset" > reset-test.txt
+pit add reset-test.txt
+pit reset reset-test.txt
+pit status
 
-# Make changes but don't commit yet
-echo "work in progress" > wip.txt
-pit add wip.txt
-
-# Stash changes to switch context
-pit stash push -m "Saving WIP feature"
-
-# List stashes
-pit stash list
-
-# Do other work...
-pit checkout master
-
-# Return and restore stash
-pit checkout feature-auth
-pit stash pop
-
-# Create a feature branch from old commit
-pit checkout -b feature-rebase
-echo "new feature" > feature.txt
-pit add feature.txt
-pit commit -m "Add new feature"
-
-# Rebase onto latest master
-pit rebase master
-
-# If conflicts occur:
-# pit mergetool          # resolve conflicts
-# pit add <file>         # stage resolved files
-# pit rebase --continue  # continue rebase
-
-# Or abort if needed:
-# pit rebase --abort
-
-# View history to find commit to revert
-pit log --oneline
-
-# Revert a specific commit (creates new commit)
+# Revert a commit
+pit log --oneline  # find commit hash to revert
 pit revert <commit-hash>
-
-# Create some untracked files
-echo "junk" > temp1.txt
-echo "junk" > temp2.txt
-mkdir temp_dir
-
-# Preview what would be removed
-pit clean -n
-
-# Preview including directories
-pit clean -n -d
-
-# Force delete untracked files
-pit clean -f
-
-# Force delete files and directories
-pit clean -f -d
-
-# Compare using external diff tool
-pit difftool
-
-# Compare staged changes
-pit difftool --staged
-
-# Search commit messages
-pit log --grep "feature"
-
-# Show commits since date
-pit log --since "1 week ago"
-
-# Show patch for specific file
-pit log --patch src/main.py
-
-# Limit number of commits
-pit log -n 5
 ```
-
 
 ## Project Structure
 
@@ -274,91 +125,58 @@ pit-project/
 │   ├── branch.py
 │   ├── checkout.py
 │   ├── diff.py
-│   ├── difftool.py
 │   ├── merge.py
-│   ├── mergetool.py
 │   ├── reset.py
-│   ├── revert.py
-│   ├── rebase.py
-│   ├── stash.py
-│   └── clean.py
-└── utils/                 # Core utilities
-    ├── repository.py      # Find repo, manage HEAD/branches
-    ├── objects.py         # Read/write blobs, trees, commits
-    ├── index.py           # Centralized index operations
-    ├── config.py          # Read/write .pit/config
-    ├── ignore.py          # Handle .pitignore
-    └── diff.py            # State comparison and diff generation
+│   └── revert.py
+└── utils/              # Core utilities (object storage, repo state, etc.)
+    ├── repository.py   # Find repo, manage HEAD/branches
+    ├── objects.py      # Read/write blobs, trees, commits
+    ├── config.py       # Read/write .pit/config
+    ├── ignore.py       # Handle .pitignore
+    └── diff.py         # State comparison and diff generation
 ```
 
 ## Internal Data Structures
 
 Pit leverages several fundamental data structures internally:
 
-| Data Structure | Usage |
-|---------------|-------|
-| **Hash Tables / Dictionaries** | Object store (hash → content), index (path → hash), configuration |
-| **Merkle Trees** | Directory structure representation via nested tree objects |
-| **Directed Acyclic Graph (DAG)** | Commit history with parent pointers |
-| **Sets** | Efficient file list comparison in `status` and `diff` |
-| **Stacks** | Stash implementation via reflog |
+- **Hash Tables / Dictionaries:** Used extensively for the object store (mapping hashes to compressed content), representing the index (mapping file paths to hashes), and managing configuration.
+- **Merkle Trees:** Implicitly built by the `commit` command using nested tree objects to represent the directory structure efficiently.
+- **Directed Acyclic Graph (DAG):** Formed by commits pointing to their parent(s), representing the project history. Traversed by `log` and `merge`.
+- **Sets:** Used for efficient comparison of file lists in `status` and `diff`.
+- **Lists / Arrays:** Used for temporary storage, like holding index lines during `reset` or branch names during listing.
 
 ---
 
-## Advanced Features
+## Advanced Features Implemented
 
 ### Three-Way Merge Algorithm
 
-- The `pit merge` command implements a three-way merge strategy
-- Automatically finds the **best common ancestor** using BFS on the commit DAG
-- Compares file states of ancestor, current HEAD, and merging branch
-- **Detects and reports conflicts** when both branches modify the same file differently
-- Creates a **merge commit** with two parents on success
+- The `pit merge` command implements a three-way merge strategy.
+- It automatically finds the **best common ancestor** commit between the current branch and the branch being merged using a Breadth-First Search on the commit DAG.
+- It compares the file states of the ancestor, the current branch head, and the merging branch head to determine changes.
+- If both branches modified the same file differently relative to the ancestor, it  **detects and reports conflicts** .
+- Successful merges result in a **merge commit** with two parents.
 
 ### Conflict Markers
 
-When a content conflict occurs, Pit writes markers into the file:
+- When a content conflict occurs during a merge, Pit writes conflict markers directly into the affected file in the working directory:
 
-```
-<<<<<<< HEAD
-Content from the current branch (HEAD)
-=======
-Content from the branch being merged
->>>>>>> <branch-name>
-```
+  ```
+  <<<<<<< HEAD
+  Content from the current branch (HEAD)
+  =======
+  Content from the branch being merged
+  >>>>>>> <branch-name>
+  ```
 
-Use `pit mergetool` to open an external tool for conflict resolution.
-
-### Rebase
-
-- `pit rebase <upstream>` replays commits on top of another base
-- Supports `--continue` after resolving conflicts
-- Supports `--abort` to cancel and restore original state
-
-### Stash
-
-- Saves both index and working directory state
-- Creates internal commit objects to persist state
-- Stack-based (LIFO) storage in `.pit/logs/stash`
+* The `pit status` command will indicate conflicted files. Manual resolution is required before committing.
 
 ### Diffing Capabilities
 
-- `pit diff` compares **working directory** vs **index** (unstaged changes)
-- `pit diff --staged` compares **index** vs **HEAD** (staged changes)
-- Uses Python's `difflib` for unified diff output
-- External tool support via `pit difftool`
-
-### Command Aliases
-
-Configure aliases in `.pit/config`:
-
-```ini
-[alias]
-st = status
-co = checkout
-br = branch
-ci = commit
-```
+- `pit diff` compares the **working directory** against the  **index (staging area)** , showing unstaged changes.
+- `pit diff --staged` compares the **index (staging area)** against the  **HEAD commit** , showing changes staged for the next commit.
+- Uses Python's `difflib` to generate standard unified diff output.
 
 ---
 
@@ -366,19 +184,19 @@ ci = commit
 
 ### Docker (Recommended)
 
-```bash
+```
 docker build -t pit-env .
 ```
 
 #### Linux/macOS
 
-```bash
+```
 docker run -it --rm -v "$(pwd)":/workspace pit-env
 ```
 
 #### Windows (PowerShell)
 
-```powershell
+```
 docker run -it --rm -v "${PWD}:/workspace" pit-env
 ```
 
@@ -388,99 +206,10 @@ docker run -it --rm -v "${PWD}:/workspace" pit-env
 python3 pit.py <command> [arguments]
 ```
 
----
-
-## Testing
-
-### Running Tests Locally
-
-```bash
-# Install test dependencies
-pip install -r requirements-dev.txt
-
-# Run all tests
-pytest
-
-# Run unit tests only
-pytest tests/unit/ -v
-
-# Run integration tests only
-pytest tests/integration/ -v
-
-# Run with coverage report
-pytest --cov=pit-project --cov-report=html
-```
-
-### Test Structure
-
-```
-tests/
-├── conftest.py              # Shared fixtures
-├── unit/                    # Unit tests for utility functions
-│   ├── test_index.py
-│   └── test_repository.py
-└── integration/             # Workflow integration tests
-    └── test_workflows.py
-```
-
-### GitHub Actions CI
-
-Tests run automatically on push/PR to `main` or `master`:
-- **Multi-platform**: Ubuntu, Windows, macOS
-- **Multi-version**: Python 3.10, 3.11, 3.12
-- **Coverage**: Reports uploaded to Codecov
-
-See `.github/workflows/test.yml` for configuration.
-
----
-
 ## Limitations
 
-| Limitation | Description |
-|------------|-------------|
-| **Local Only** | No network operations (`clone`, `fetch`, `pull`, `push`) |
-| **Basic Conflict Handling** | Conflicts require manual resolution |
-| **Cross-Platform** | Fully supports Windows, macOS, and Linux |
-
----
-
-## Configuration
-
-### User Configuration
-
-```bash
-pit config user.name "Your Name"
-pit config user.email "your@email.com"
-```
-
-### External Tools
-
-Configure in `.pit/config`:
-
-```ini
-[diff]
-tool = code --wait --diff $LOCAL $REMOTE
-
-[merge]
-tool = code --wait --merge $LOCAL $REMOTE $BASE $MERGED
-```
-
----
-
-## .pitignore
-
-Create a `.pitignore` file to exclude files from tracking:
-
-```
-# Ignore build artifacts
-*.pyc
-__pycache__/
-build/
-dist/
-
-# Ignore IDE files
-.vscode/
-.idea/
-```
-
-Default ignored patterns: `.pit`, `.pit/*`, `*.pyc`, `__pycache__`
+- **Local Only:** This implementation focuses on local repository operations. It does not include network protocols (`clone`, `fetch`, `pull`, `push`).
+- **Basic Conflict Handling:** Merge conflicts are detected and marked, but manual resolution is always required. No merge strategies or tools are included.
+- **No History Rewriting:** Commands like `rebase` or amending commits are not implemented.
+- **Limited Branch Checkout:** `pit checkout <branch>` only switches the `HEAD` pointer. It **does not automatically update the index or working directory** to match the state of the target branch's commit (unlike Git, which typically performs this update). `pit checkout <file>`. correctly restores files in the working directory from the index.
+- **Simplifications:** Object storage, tree format, and index format might differ slightly from Git's internal details for simplicity. Error handling might be less robust than Git's
