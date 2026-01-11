@@ -62,3 +62,14 @@ def get_branch_commit(repo_root, branch_name): # Retrieves the commit hash that 
         return None
     with open(branch_path, 'r') as f:
         return f.read().strip()
+
+def get_head_status(repo_root): # Returns a user-friendly string describing HEAD state
+    current_branch = get_current_branch(repo_root)
+    if current_branch:
+        return f"On branch {current_branch}"
+    else:
+        head_commit = get_head_commit(repo_root)
+        if head_commit:
+            return f"HEAD detached at {head_commit[:7]}"
+        else:
+            return "HEAD detached (no commits yet)"

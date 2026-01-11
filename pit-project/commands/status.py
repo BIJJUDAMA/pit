@@ -7,14 +7,14 @@ import os
 import sys
 from utils import repository, objects, ignore, index as index_utils
 
-def run(args): #Compares the HEAD, index, and working directory states and prints the status
+def run(args): # Compares the HEAD, index, and working directory states and prints the status
     repo_root = repository.find_repo_root()
     if not repo_root:
         print("fatal: not a pit repository", file=sys.stderr)
         sys.exit(1)
 
-    current_branch = repository.get_current_branch(repo_root)
-    print(f"On branch {current_branch}")
+    # Use centralized function for HEAD status
+    print(repository.get_head_status(repo_root))
 
     # Get status of HEAD vs Index (staged changes)
     head_commit = repository.get_head_commit(repo_root)
