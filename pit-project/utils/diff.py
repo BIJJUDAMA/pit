@@ -27,7 +27,7 @@ def get_diff_lines(content1, content2, from_file, to_file): #Generates unified d
         content2_lines,
         fromfile=from_file,
         tofile=to_file,
-        lineterm='\\n'
+        lineterm=''
     )
 
-    return list(line + '\\n' for line in diff)
+    return list(line + '\n' for line in diff)
