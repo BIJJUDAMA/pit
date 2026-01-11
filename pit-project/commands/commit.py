@@ -37,7 +37,7 @@ def create_commit(repo_root, message, parents): # Creates a commit object and up
         raise Exception("Author identity unknown...")
 
     timestamp = int(time.time())
-    timezone = time.strftime('%z', time.gmtime())
+    timezone = time.strftime('%z', time.localtime())  
     author = f"{user_name} <{user_email}> {timestamp} {timezone}"
     
     lines = [f'tree {tree_hash}']

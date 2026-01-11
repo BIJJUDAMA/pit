@@ -335,7 +335,7 @@ def clear_stashes(args):
 def _create_stash_commit(repo_root, tree_hash, parents, message):
     user_name, user_email = config.get_user_config(repo_root)
     timestamp = int(time.time())
-    timezone = time.strftime('%z', time.gmtime())
+    timezone = time.strftime('%z', time.localtime())
     author = f"{user_name or 'Pit User'} <{user_email or 'pit@example.com'}> {timestamp} {timezone}"
     
     lines = [f'tree {tree_hash}']
