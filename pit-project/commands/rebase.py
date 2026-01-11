@@ -340,7 +340,7 @@ def _is_valid_commit(repo_root, commit_hash):
     try:
         obj_type, _ = objects.read_object(repo_root, commit_hash)
         return obj_type == 'commit'
-    except:
+    except Exception:
         return False
 
 def _get_parents(repo_root, commit_hash):

@@ -102,7 +102,7 @@ def push(args):
                 
                 hash_val = objects.hash_object(repo_root, content, 'blob')
                 workdir_index[rel_path] = (hash_val, mtime, size)
-            except:
+            except Exception:
                 pass
     
     for path in list(workdir_index.keys()):
@@ -286,7 +286,8 @@ def _is_clean(repo_root):
                     with open(os.path.join(root, file), 'rb') as f:
                          content = f.read()
                     working_files[path] = objects.hash_object(repo_root, content, 'blob', write=False)
-                 except: pass
+                 except Exception:
+                     pass
                  
     unstaged = diff_utils.compare_states(files2_idx, working_files)
     if any(unstaged['modified']) or any(unstaged['deleted']):

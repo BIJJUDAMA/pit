@@ -123,7 +123,7 @@ def _get_commit_parents(repo_root, commit_hash):
             if line.startswith('parent '):
                 parents.append(line.split(' ')[1])
         return parents
-    except:
+    except Exception:
         return []
 # Perform three-way merge between common ancestor, current HEAD, and merge target
 def _perform_three_way_merge(repo_root, ancestor_hash, head_hash, merge_hash):

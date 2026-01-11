@@ -271,7 +271,7 @@ def _is_within_relative_time(commit_date, time_str):
             return True
             
         return commit_date >= cutoff
-    except:
+    except Exception:
         return True
     
 # Check if commit message matches grep pattern
