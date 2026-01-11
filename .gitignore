@@ -1,2 +1,12 @@
 __pycache__/
 pit-full-test/
+venv/
+.venv/
+*.pyc
+*.pyo
+.pytest_cache/
+.coverage
+htmlcov/
+*.egg-info/
+dist/
+build/
