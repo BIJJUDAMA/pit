@@ -55,7 +55,7 @@ def _show_standard_log(repo_root, start_commit, args):
             if args.file and not _commit_affects_file(repo_root, commit_data, args.file):
                 continue
             
-            _print_commit_details(commit_data, args)
+            _print_commit_details(repo_root, commit_data, args)
             commit_count += 1
             
             # Add parents to stack in reverse order for proper DAG traversal
@@ -274,7 +274,13 @@ def _is_within_relative_time(commit_date, time_str):
     except:
         return True
     
-#Check if commit message matches grep pattern
+# Check if commit message matches grep pattern
+def _commit_matches_grep(commit_data, pattern):
+    if not pattern:
+        return True
+    return pattern.lower() in commit_data['message'].lower()
+
+# Check if commit affects a specific file
 def _commit_affects_file(repo_root, commit_data, file_pattern):
     try:
         commit_files = objects.get_commit_files(repo_root, commit_data['hash'])
@@ -293,7 +299,7 @@ def _commit_affects_file(repo_root, commit_data, file_pattern):
         print(f"Debug: Error checking files in commit {commit_data['hash'][:7]}: {e}", file=sys.stderr)
         return False
 
-def _print_commit_details(commit_data, args):
+def _print_commit_details(repo_root, commit_data, args):
     print(f"commit {commit_data['hash']}")    
     # Show merge parents if it's a merge commit
     if len(commit_data['parents']) > 1:
