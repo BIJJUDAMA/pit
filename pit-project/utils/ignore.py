@@ -4,10 +4,8 @@
 import os
 from fnmatch import fnmatch
 
+# Reads the .pitignore file and returns a set of glob patterns.
 def get_ignored_patterns(repo_root):
-    """
-    Reads the .pitignore file and returns a set of glob patterns.
-    """
     ignore_file = os.path.join(repo_root, '.pitignore')
     patterns = {'.pit', '.pit/*', '*.pyc', '__pycache__'} # Always ignore these
     
