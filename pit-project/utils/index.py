@@ -4,9 +4,11 @@
 
 import os
 
-# Reads the index file and returns a dictionary {path: (hash, mtime, size)}.
-# Handles both old format (hash path) and new format (hash mtime size path).
 def read_index(repo_root):
+    """
+    Reads the index file and returns a dictionary {path: (hash, mtime, size)}.
+    Handles both old format (hash path) and new format (hash mtime size path).
+    """
     index_path = os.path.join(repo_root, '.pit', 'index')
     index_files = {}
     if os.path.exists(index_path):

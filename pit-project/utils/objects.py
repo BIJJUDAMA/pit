@@ -49,10 +49,8 @@ def build_tree_from_index(repo_root): # Builds a nested dictionary representing 
     index_files = read_index(repo_root)
     return build_tree_from_dict(index_files)
 
+# Builds a nested dictionary representing the tree structure from a dict of {path: hash}.
 def build_tree_from_dict(files_dict):
-    """
-    Builds a nested dictionary representing the tree structure from a dict of {path: hash}.
-    """
     tree = {}
     for path, hash_val in files_dict.items():
         # Handle cases where hash might be a tuple (hash, mtime, size)
@@ -66,11 +64,9 @@ def build_tree_from_dict(files_dict):
         current_level[parts[-1]] = hash_val
     return tree
 
+# Reads the index file and returns a dictionary {path: (hash, mtime, size)}.
+# If mtime/size are missing in old format, they default to 0.
 def read_index(repo_root):
-    """
-    Reads the index file and returns a dictionary {path: (hash, mtime, size)}.
-    If mtime/size are missing in old format, they default to 0.
-    """
     index_path = os.path.join(repo_root, '.pit', 'index')
     index_files = {}
     if os.path.exists(index_path):
