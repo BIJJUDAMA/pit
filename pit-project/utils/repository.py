@@ -3,7 +3,6 @@
 # What data structure it uses: Uses recursion (specifically, linear recursion) to find the repo root. Conceptually, it manages pointers (the `HEAD` file and branch files), which are fundamental components of data structures like Graphs and Linked Lists
 
 import os
-import sys
 
 def find_repo_root(path='.'): # Recursively searches for the .pit directory to find the repository root
     path = os.path.abspath(path)
