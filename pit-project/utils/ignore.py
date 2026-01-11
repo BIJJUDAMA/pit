@@ -20,7 +20,11 @@ def get_ignored_patterns(repo_root):
     return patterns
 
 def is_ignored(path, ignore_patterns): # Returns True if the path matches any ignore pattern
+    # Normalize path separators for cross-platform matching
+    normalized_path = path.replace(os.sep, '/')
     for pattern in ignore_patterns:
-        if fnmatch(path, pattern) or any(fnmatch(part, pattern) for part in path.split(os.sep)):
+        # Normalize pattern separators
+        normalized_pattern = pattern.replace(os.sep, '/')
+        if fnmatch(normalized_path, normalized_pattern) or any(fnmatch(part, normalized_pattern) for part in normalized_path.split('/')):
             return True
     return False

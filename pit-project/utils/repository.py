@@ -23,7 +23,9 @@ def get_head_commit(repo_root): # Retrieves the commit hash that HEAD points to,
         head_content = f.read().strip()
     if head_content.startswith('ref: '):
         ref_path = head_content.split(' ', 1)[1]
-        branch_path = os.path.join(repo_root, '.pit', ref_path)
+        # Convert forward slashes to OS-specific separator for file path
+        ref_path_normalized = ref_path.replace('/', os.sep)
+        branch_path = os.path.join(repo_root, '.pit', ref_path_normalized)
         if not os.path.exists(branch_path) or os.path.getsize(branch_path) == 0:
             return None
         with open(branch_path, 'r') as f:

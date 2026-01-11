@@ -9,6 +9,7 @@ import os
 import shutil
 import subprocess
 import tempfile
+import platform
 from utils import repository, objects, config
 from commands import merge, add
 
@@ -88,11 +89,12 @@ def _process_file(repo_root, file_path, base_commit, head_commit, remote_commit,
     base_tmp = write_temp(base_hash, "BASE")
     merged_path = os.path.join(repo_root, file_path) # In-place edit
     
-    # Prepare command
+    # Prepare command with cross-platform null device
+    null_path = "NUL" if platform.system() == "Windows" else "/dev/null"
     cmd = tool_command
-    cmd = cmd.replace('$LOCAL', local_tmp or "/dev/null")
-    cmd = cmd.replace('$REMOTE', remote_tmp or "/dev/null")
-    cmd = cmd.replace('$BASE', base_tmp or "/dev/null")
+    cmd = cmd.replace('$LOCAL', local_tmp or null_path)
+    cmd = cmd.replace('$REMOTE', remote_tmp or null_path)
+    cmd = cmd.replace('$BASE', base_tmp or null_path)
     cmd = cmd.replace('$MERGED', merged_path)
     
     # Run
