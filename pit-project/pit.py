@@ -151,7 +151,7 @@ def main():
     stash_list_parser = stash_subparsers.add_parser("list", help="List stash entries.")
     
     # stash clear
-    stash_clear_parser = stash_subparsers.add_parser("clear", help="Remove all stash entries.")
+    _stash_clear_parser = stash_subparsers.add_parser("clear", help="Remove all stash entries.")
     
     stash_parser.set_defaults(func=stash.run)
 

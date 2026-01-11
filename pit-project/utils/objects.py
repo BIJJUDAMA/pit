@@ -3,11 +3,9 @@
 # What data structure it uses: Hash Table / Dictionary (the entire object store is a content-addressed dictionary where the SHA-1 hash is the key).
 # It now explicitly builds and reads a Merkle Tree to represent the project's file structure, using recursion to do so
 
-
 import os
 import hashlib
 import zlib
-import sys
 
 def hash_object(repo_root, content, obj_type, write=True): #Hashes content and optionally writes it as an object of the given type ('blob', 'tree', 'commit')
     header = f'{obj_type} {len(content)}\0'.encode()
