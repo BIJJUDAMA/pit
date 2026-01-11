@@ -146,16 +146,16 @@ def _perform_three_way_merge(repo_root, ancestor_hash, head_hash, merge_hash):
 
     # Process each file for three-way merge
     for file_path in sorted(all_files):
-        ancestor_hash = ancestor_files.get(file_path)
-        head_hash = head_files.get(file_path) 
-        merge_hash = merge_files.get(file_path)
+        file_ancestor_hash = ancestor_files.get(file_path)
+        file_head_hash = head_files.get(file_path) 
+        file_merge_hash = merge_files.get(file_path)
         
-        result = _merge_file(repo_root, file_path, ancestor_hash, head_hash, merge_hash)
+        result = _merge_file(repo_root, file_path, file_ancestor_hash, file_head_hash, file_merge_hash)
         
         if result == 'conflict':
             conflicts.append(file_path)
             print(f"CONFLICT (content): Merge conflict in {file_path}")
-            _create_conflict_file(repo_root, file_path, head_hash, merge_hash)
+            _create_conflict_file(repo_root, file_path, file_head_hash, file_merge_hash)
         elif result == 'added':
             print(f"Adding {file_path}")
         elif result == 'deleted':
