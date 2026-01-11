@@ -39,7 +39,8 @@ def run(args):
         
         # For working directory diff, read the actual file
         if not args.staged and path in files2:
-            content2 = open(os.path.join(repo_root, path), 'rb').read()
+            with open(os.path.join(repo_root, path), 'rb') as f:
+                content2 = f.read()
         # For staged diff, the "after" state is in the index
         elif args.staged and path in files2:
             content2 = objects.read_object(repo_root, files2[path])[1]
