@@ -1,39 +1,36 @@
 # The command: pit reset <file>
 # What it does: Unstages files by removing them from the staging area (the index). It is the opposite of `pit add`
-# How it does: It uses a "filter and rewrite" strategy. It reads all lines from the current index file into an in-memory list, excluding lines for files that the user wants to reset. It then overwrites the index file with the contents of this filtered list
-# What data structure it uses: List / Array (to temporarily hold the index lines that are being kept)
+# How it does: It uses a "filter and rewrite" strategy. It reads all entries from the current index, filters out the files the user wants to reset, and rewrites the index with the remaining entries
+# What data structure it uses: Dictionary (to hold the index entries that are being kept)
 
 import sys
 import os
-from utils import repository
+from utils import repository, index as index_utils
 
-def run(args): #Executes the reset command to unstage files
+def run(args): # Executes the reset command to unstage files
     repo_root = repository.find_repo_root()
     if not repo_root:
         print("fatal: not a pit repository", file=sys.stderr)
         sys.exit(1)
 
-    index_path = os.path.join(repo_root, '.pit', 'index')
+    # Read the current index using centralized function
+    index = index_utils.read_index(repo_root)
     
-    if not os.path.exists(index_path):
+    if not index:
         return # Nothing to do if there's no index
-
-    lines_to_keep = []
-    try:
-        with open(index_path, 'r') as f:
-            for line in f:
-                hash_val, path = line.strip().split(' ', 1)
-                # If the path is not one of the files to be reset, keep it
-                if path not in args.files:
-                    lines_to_keep.append(line)
-        
-        with open(index_path, 'w') as f:
-            f.writelines(lines_to_keep)
-        
+    
+    # Filter out files to be reset
+    files_reset = []
+    for file_path in args.files:
+        if file_path in index:
+            del index[file_path]
+            files_reset.append(file_path)
+    
+    # Write updated index using centralized function
+    index_utils.write_index(repo_root, index)
+    
+    if files_reset:
         print("Unstaged changes after reset:")
-        for file_path in args.files:
+        for file_path in files_reset:
             print(f" M {file_path}")
 
-    except Exception as e:
-        print(f"Error resetting files: {e}", file=sys.stderr)
-        sys.exit(1)

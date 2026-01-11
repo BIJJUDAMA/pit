@@ -5,7 +5,7 @@
 
 import sys
 import os
-from utils import repository, objects, diff as diff_utils
+from utils import repository, objects, diff as diff_utils, index as index_utils
 from commands import commit, add
 
 def run(args):
@@ -101,14 +101,8 @@ def _get_commit_changes(repo_root, parent_commit, target_commit):
     
 #Apply the reverse of the changes to working directory and staging area
 def _apply_reverse_changes(repo_root, changes):
-    # Read current index
-    index_path = os.path.join(repo_root, '.pit', 'index')
-    index_files = {}
-    if os.path.exists(index_path):
-        with open(index_path, 'r') as f:
-            for line in f:
-                hash_val, path = line.strip().split(' ', 1)
-                index_files[path] = hash_val
+    # Read current index using centralized function
+    index_files = index_utils.read_index_hashes(repo_root)
 
     # For files that were added in the original commit-delete them
     for path in changes['added']:
@@ -147,7 +141,5 @@ def _apply_reverse_changes(repo_root, changes):
                     f.write(content)
                 index_files[path] = blob_hash
 
-    # Write updated index
-    with open(index_path, 'w') as f:
-        for path, hash_val in sorted(index_files.items()):
-            f.write(f"{hash_val} {path}\n")
+    # Write updated index using centralized function
+    index_utils.write_index(repo_root, index_files)

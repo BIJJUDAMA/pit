@@ -5,7 +5,7 @@
 
 import os
 import sys
-from utils import repository, objects, diff as diff_utils
+from utils import repository, objects, diff as diff_utils, index as index_utils
 
 def run(args):
 # Shows differences between working directory and index (if --staged is not used)
@@ -50,24 +50,8 @@ def run(args):
         sys.stdout.writelines(diff_lines)
 
 def _get_index_files(repo_root):
-    index_path = os.path.join(repo_root, '.pit', 'index')
-    index_files = {}
-    if os.path.exists(index_path):
-        with open(index_path, 'r') as f:
-            for line in f:
-                parts = line.strip().split(' ')
-                if len(parts) >= 4:
-                    # New format
-                    hash_val = parts[0]
-                    mtime = int(parts[1])
-                    size = int(parts[2])
-                    path = " ".join(parts[3:])
-                    index_files[path] = (hash_val, mtime, size)
-                else:
-                    # Old format
-                    hash_val, path = line.strip().split(' ', 1)
-                    index_files[path] = (hash_val, 0, 0)
-    return index_files
+    # Use centralized index function
+    return index_utils.read_index(repo_root)
 
 def _get_working_dir_files(repo_root, index_files=None):
     from utils import ignore  # Local import to avoid cycles

@@ -6,7 +6,7 @@
 #Implemented 3 way diff similar to Git's
 import sys
 import os
-from utils import repository, objects, diff as diff_utils
+from utils import repository, objects, diff as diff_utils, index as index_utils
 from commands import commit, add
 
 def run(args): 
@@ -125,9 +125,8 @@ def _get_commit_parents(repo_root, commit_hash):
         return parents
     except:
         return []
-
+# Perform three-way merge between common ancestor, current HEAD, and merge target
 def _perform_three_way_merge(repo_root, ancestor_hash, head_hash, merge_hash):
-    """Perform three-way merge between common ancestor, current HEAD, and merge target"""
     
     # Get file states from all three commits
     ancestor_files = objects.get_commit_files(repo_root, ancestor_hash)
@@ -137,14 +136,8 @@ def _perform_three_way_merge(repo_root, ancestor_hash, head_hash, merge_hash):
     all_files = set(ancestor_files.keys()) | set(head_files.keys()) | set(merge_files.keys())
     conflicts = []
     
-    # Read current index
-    index_path = os.path.join(repo_root, '.pit', 'index')
-    current_index = {}
-    if os.path.exists(index_path):
-        with open(index_path, 'r') as f:
-            for line in f:
-                hash_val, path = line.strip().split(' ', 1)
-                current_index[path] = hash_val
+    # Read current index using centralized function
+    current_index = index_utils.read_index_hashes(repo_root)
     
     # Write MERGE_HEAD for mergetool context
     merge_head_path = os.path.join(repo_root, '.pit', 'MERGE_HEAD')
@@ -182,15 +175,13 @@ def _perform_three_way_merge(repo_root, ancestor_hash, head_hash, merge_hash):
     if os.path.exists(merge_head_path):
         os.remove(merge_head_path)
 
-    # Write the merged index
-    with open(index_path, 'w') as f:
-        for path, hash_val in sorted(current_index.items()):
-            f.write(f"{hash_val} {path}\n")
+    # Write the merged index using centralized function
+    index_utils.write_index(repo_root, current_index)
     
     return True
 
+# Merge a single file using three-way merge algorithm
 def _merge_file(repo_root, file_path, ancestor_hash, head_hash, merge_hash):
-    """Merge a single file using three-way merge algorithm"""
     
     # Case 1: File unchanged in both branches
     if head_hash == merge_hash:
@@ -228,17 +219,10 @@ def _merge_file(repo_root, file_path, ancestor_hash, head_hash, merge_hash):
     
     return 'unchanged'
 
+# Stage a specific version of a file
 def _stage_file_version(repo_root, file_path, blob_hash):
-    """Stage a specific version of a file"""
-    index_path = os.path.join(repo_root, '.pit', 'index')
-    
-    # Read current index
-    current_index = {}
-    if os.path.exists(index_path):
-        with open(index_path, 'r') as f:
-            for line in f:
-                hash_val, path = line.strip().split(' ', 1)
-                current_index[path] = hash_val
+    # Read current index using centralized function
+    current_index = index_utils.read_index_hashes(repo_root)
     
     # Update index with new version
     current_index[file_path] = blob_hash
@@ -254,22 +238,13 @@ def _stage_file_version(repo_root, file_path, blob_hash):
         with open(full_path, 'wb') as f:
             f.write(content)
     
-    # Write updated index
-    with open(index_path, 'w') as f:
-        for path, hash_val in sorted(current_index.items()):
-            f.write(f"{hash_val} {path}\n")
+    # Write updated index using centralized function
+    index_utils.write_index(repo_root, current_index)
 
+# Remove a file from index and working directory
 def _remove_file(repo_root, file_path):
-    """Remove a file from index and working directory"""
-    index_path = os.path.join(repo_root, '.pit', 'index')
-    
-    # Read current index
-    current_index = {}
-    if os.path.exists(index_path):
-        with open(index_path, 'r') as f:
-            for line in f:
-                hash_val, path = line.strip().split(' ', 1)
-                current_index[path] = hash_val
+    # Read current index using centralized function
+    current_index = index_utils.read_index_hashes(repo_root)
     
     # Remove from index
     if file_path in current_index:
@@ -280,10 +255,8 @@ def _remove_file(repo_root, file_path):
     if os.path.exists(full_path):
         os.remove(full_path)
     
-    # Write updated index
-    with open(index_path, 'w') as f:
-        for path, hash_val in sorted(current_index.items()):
-            f.write(f"{hash_val} {path}\n")
+    # Write updated index using centralized function
+    index_utils.write_index(repo_root, current_index)
 
 def _create_conflict_file(repo_root, file_path, head_hash, merge_hash):
     full_path = os.path.join(repo_root, file_path)

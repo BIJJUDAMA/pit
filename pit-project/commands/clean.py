@@ -6,7 +6,7 @@
 import os
 import sys
 import shutil
-from utils import repository, ignore
+from utils import repository, ignore, index as index_utils
 
 def run(args): #Starts the workspace cleanup process
     repo_root = repository.find_repo_root() # Locats the repository root directory
@@ -14,16 +14,13 @@ def run(args): #Starts the workspace cleanup process
         print("fatal: not a pit repository", file=sys.stderr)
         sys.exit(1)
 
-    index_path = os.path.join(repo_root, '.pit', 'index')
-    index_files = set() #Store normalized paths of tracked files
-    if os.path.exists(index_path):
-        with open(index_path, 'r') as f:
-            for line in f:
-                parts = line.strip().split(' ', 1)
-                if len(parts) == 2:
-                    #normalizing path and case to support cross-OS comparisons
-                    norm_path = os.path.normpath(parts[1])
-                    index_files.add(os.path.normcase(norm_path))
+    # Get tracked files from index using centralized function
+    index_data = index_utils.read_index(repo_root)
+    index_files = set()
+    for path in index_data.keys():
+        # Normalizing path and case to support cross-OS comparisons
+        norm_path = os.path.normpath(path)
+        index_files.add(os.path.normcase(norm_path))
 
     ignore_patterns = ignore.get_ignored_patterns(repo_root) 
     

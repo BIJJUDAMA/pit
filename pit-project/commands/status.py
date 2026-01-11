@@ -5,7 +5,7 @@
 
 import os
 import sys
-from utils import repository, objects, ignore
+from utils import repository, objects, ignore, index as index_utils
 
 def run(args): #Compares the HEAD, index, and working directory states and prints the status
     repo_root = repository.find_repo_root()
@@ -20,20 +20,8 @@ def run(args): #Compares the HEAD, index, and working directory states and print
     head_commit = repository.get_head_commit(repo_root)
     head_files = objects.get_commit_files(repo_root, head_commit) if head_commit else {}
     
-    index_path = os.path.join(repo_root, '.pit', 'index')
-    index_files = {}
-    if os.path.exists(index_path):
-        with open(index_path, 'r') as f:
-            for line in f:
-                parts = line.strip().split(' ')
-                if len(parts) >= 4:
-                    # New format: hash mtime size path
-                    hash_val = parts[0]
-                    path = " ".join(parts[3:])
-                    index_files[path] = hash_val
-                else:
-                    hash_val, path = line.strip().split(' ', 1)
-                    index_files[path] = hash_val
+    # Get index files using centralized function
+    index_files = index_utils.read_index_hashes(repo_root)
 
     # Get status of Index vs Working Directory (unstaged changes)
     working_files = {}

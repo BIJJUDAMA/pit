@@ -5,7 +5,7 @@
 
 import os
 import sys
-from utils import repository, objects, ignore
+from utils import repository, objects, ignore, index as index_utils
 
 def run(args):
 
@@ -20,27 +20,8 @@ def run(args):
     index_path = os.path.join(repo_root, '.pit', 'index')
     ignore_patterns = ignore.get_ignored_patterns(repo_root) # Load ignore patterns from .pitgnore
     
-        # Read the current index into a dictionary
-
-    index = {}
-    if os.path.exists(index_path):
-        with open(index_path, 'r') as f:
-            for line in f:
-                parts = line.strip().split(' ')
-                if len(parts) >= 4:
-                    # New format: hash mtime size path
-                    hash_val = parts[0]
-                    mtime = int(parts[1])
-                    size = int(parts[2])
-                    # Join the rest as path in case path contains spaces (though splitting by ' ' earlier might be risky if we don't handle maxsplit carefully, but let's stick to simple split for now or better, maxsplit)
-                    # Actually, the original code did `line.strip().split(' ', 1)`. 
-                    # If I change format to `hash mtime size path`, I should split carefully.
-                    path = " ".join(parts[3:]) 
-                    index[path] = (hash_val, mtime, size)
-                else:
-                    # Old format: hash path
-                    hash_val, path = line.strip().split(' ', 1)
-                    index[path] = (hash_val, 0, 0) # Default mtime/size to 0
+    # Read the current index using centralized function
+    index = index_utils.read_index(repo_root)
 
     files_to_add = _expand_files(args, repo_root)
 
@@ -77,19 +58,11 @@ def run(args):
         except Exception as e:
             print(f"Error adding file {file_path}: {e}", file=sys.stderr)
 
-    # Write the updated index back to the file
-    try:
-        with open(index_path, 'w') as f:
-            for path, (hash_val, mtime, size) in sorted(index.items()):
-                f.write(f"{hash_val} {mtime} {size} {path}\n")
-    except Exception as e:
-        print(f"Error writing to index: {e}", file=sys.stderr)
-        sys.exit(1)
+    # Write the updated index back using centralized function
+    index_utils.write_index(repo_root, index)
 
+# Expands file arguments like '.' into a list of all files in the directory.
 def _expand_files(args, repo_root):
-    """
-    Expands file arguments like '.' into a list of all files in the directory.
-    """
     expanded_files = []
     cwd = os.getcwd()
     
