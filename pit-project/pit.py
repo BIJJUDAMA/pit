@@ -6,7 +6,7 @@ from utils.config import read_config
 from commands import (
     init, add, commit, log, status, config,
     branch, checkout, diff, merge, reset,
-    revert, clean, rebase, mergetool, difftool,
+    revert, clean, rebase, mergetool, difftool, stash,
     # remote, push, pull, clone
 )
 
@@ -28,7 +28,7 @@ def main():
         known_commands = {
             "init", "add", "commit", "log", "status", "config",
             "branch", "checkout", "diff", "merge", "reset",
-            "revert", "clean", "stash", "tag"
+            "revert", "clean", "stash", "rebase", "difftool", "mergetool"
         }
         
         if potential_alias not in known_commands:
@@ -135,6 +135,25 @@ def main():
     rebase_parser.add_argument("--continue", action="store_true", dest="cont", help="Continue the rebase after resolving conflicts.")
     rebase_parser.add_argument("--abort", action="store_true", help="Abort the rebase and return to original state.")
     rebase_parser.set_defaults(func=rebase.run)
+
+    # Command: stash
+    stash_parser = subparsers.add_parser("stash", help="Stash the changes in a dirty working directory.")
+    stash_subparsers = stash_parser.add_subparsers(dest="stash_command", help="Stash subcommands")
+    
+    # stash push
+    stash_push_parser = stash_subparsers.add_parser("push", help="Save your local modifications to a new stash entry.")
+    stash_push_parser.add_argument("-m", "--message", help="Stash message.")
+    
+    # stash pop
+    stash_pop_parser = stash_subparsers.add_parser("pop", help="Remove a stash entry and apply it to the working directory.")
+    
+    # stash list
+    stash_list_parser = stash_subparsers.add_parser("list", help="List stash entries.")
+    
+    # stash clear
+    stash_clear_parser = stash_subparsers.add_parser("clear", help="Remove all stash entries.")
+    
+    stash_parser.set_defaults(func=stash.run)
 
     # # Command: remote
     # remote_parser = subparsers.add_parser("remote", help="Manage remote repositories (HTTPS only)")

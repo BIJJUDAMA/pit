@@ -10,7 +10,8 @@ from utils import repository, objects, config, ignore
 
 def run(args):
     command = args.stash_command
-    if command == 'push':
+    if command == 'push' or command is None:
+        # Default to push if no subcommand (mimics git behavior)
         push(args)
     elif command == 'pop':
         pop(args)
