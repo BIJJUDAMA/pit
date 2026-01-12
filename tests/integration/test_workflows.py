@@ -12,10 +12,10 @@ from commands import init, add, commit, status, branch, checkout, merge, log, st
 
 
 class TestBasicWorkflow:
-    """Tests for the basic init -> add -> commit -> status workflow."""
+    # Tests for the basic init -> add -> commit -> status workflow
     
     def test_init_creates_pit_directory(self, temp_dir):
-        """pit init should create .pit directory structure."""
+        # pit init should create .pit directory structure
         os.chdir(temp_dir)
         
         # Simulate init
@@ -31,7 +31,7 @@ class TestBasicWorkflow:
         assert os.path.isfile(os.path.join(pit_dir, 'HEAD'))
     
     def test_add_stages_file(self, temp_repo):
-        """pit add should add file to index."""
+        # pit add should add file to index
         # Create a file
         file_path = os.path.join(temp_repo, 'test.txt')
         with open(file_path, 'w') as f:
@@ -52,7 +52,7 @@ class TestBasicWorkflow:
         assert result['test.txt'][0] == blob_hash
     
     def test_commit_creates_objects(self, temp_repo):
-        """pit commit should create tree and commit objects."""
+        # pit commit should create tree and commit objects
         # Setup: add a file
         file_path = os.path.join(temp_repo, 'README.md')
         with open(file_path, 'w') as f:
@@ -76,10 +76,10 @@ class TestBasicWorkflow:
 
 
 class TestBranchingWorkflow:
-    """Tests for branch creation and switching."""
+    # Tests for branch creation and switching
     
     def test_create_and_switch_branch(self, repo_with_commit):
-        """Should be able to create and switch branches."""
+        # Should be able to create and switch branches
         repo_root, commit_hash = repo_with_commit
         
         # Create new branch
@@ -98,7 +98,7 @@ class TestBranchingWorkflow:
         assert repository.get_current_branch(repo_root) == 'feature'
     
     def test_branch_points_to_correct_commit(self, repo_with_commit):
-        """New branch should point to current commit."""
+        # New branch should point to current commit
         repo_root, commit_hash = repo_with_commit
         
         repository.create_branch(repo_root, 'new-branch', commit_hash)
@@ -108,10 +108,10 @@ class TestBranchingWorkflow:
 
 
 class TestMergeWorkflow:
-    """Tests for merge scenarios."""
+    # Tests for merge scenarios
     
     def test_fast_forward_merge_scenario(self, repo_with_branches):
-        """Test setup for fast-forward merge."""
+        # Test setup for fast-forward merge
         repo_root, initial_commit = repo_with_branches
         
         # Both branches point to same commit initially
@@ -122,10 +122,10 @@ class TestMergeWorkflow:
 
 
 class TestStashWorkflow:
-    """Tests for stash operations."""
+    # Tests for stash operations
     
     def test_stash_directory_creation(self, temp_repo):
-        """Stash log directory should be creatable."""
+        # Stash log directory should be creatable
         logs_dir = os.path.join(temp_repo, '.pit', 'logs')
         os.makedirs(logs_dir, exist_ok=True)
         
@@ -137,10 +137,10 @@ class TestStashWorkflow:
 
 
 class TestCleanWorkflow:
-    """Tests for clean command."""
+    # Tests for clean command
     
     def test_identifies_untracked_files(self, repo_with_commit):
-        """Should identify files not in index."""
+        # Should identify files not in index
         repo_root, _ = repo_with_commit
         
         # Create untracked file
@@ -157,10 +157,10 @@ class TestCleanWorkflow:
 
 
 class TestResetWorkflow:
-    """Tests for reset/unstage operations."""
+    # Tests for reset/unstage operations
     
     def test_reset_removes_from_index(self, temp_repo):
-        """Reset should remove file from index."""
+        # Reset should remove file from index
         # Add file to index
         index = {
             'file1.txt': ('hash1', 0, 0),

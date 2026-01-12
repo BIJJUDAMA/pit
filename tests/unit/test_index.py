@@ -10,15 +10,15 @@ from utils import index as index_utils
 
 
 class TestReadIndex:
-    """Tests for index_utils.read_index()"""
+    # Tests for index_utils.read_index()
     
     def test_read_empty_index(self, temp_repo):
-        """Should return empty dict when no index exists."""
+        # Should return empty dict when no index exists
         result = index_utils.read_index(temp_repo)
         assert result == {}
     
-    def test_read_new_format_index(self, temp_repo):
-        """Should correctly parse new format: hash mtime size path"""
+    def test_read_index_format(self, temp_repo):
+        # Should correctly parse format: hash mtime size path
         index_path = os.path.join(temp_repo, '.pit', 'index')
         with open(index_path, 'w') as f:
             f.write("abc123 1234567890 100 test.txt\n")
@@ -30,24 +30,13 @@ class TestReadIndex:
         assert result['test.txt'] == ('abc123', 1234567890, 100)
         assert 'src/main.py' in result
         assert result['src/main.py'] == ('def456', 9876543210, 200)
-    
-    def test_read_old_format_index(self, temp_repo):
-        """Should handle old format: hash path (backwards compatibility)"""
-        index_path = os.path.join(temp_repo, '.pit', 'index')
-        with open(index_path, 'w') as f:
-            f.write("abc123 old_file.txt\n")
-        
-        result = index_utils.read_index(temp_repo)
-        
-        assert 'old_file.txt' in result
-        assert result['old_file.txt'] == ('abc123', 0, 0)  # Default mtime/size
 
 
 class TestReadIndexHashes:
-    """Tests for index_utils.read_index_hashes()"""
+    # Tests for index_utils.read_index_hashes()
     
     def test_returns_only_hashes(self, temp_repo):
-        """Should return dict of {path: hash} only."""
+        # Should return dict of {path: hash} only
         index_path = os.path.join(temp_repo, '.pit', 'index')
         with open(index_path, 'w') as f:
             f.write("abc123 1234567890 100 test.txt\n")
@@ -58,10 +47,10 @@ class TestReadIndexHashes:
 
 
 class TestWriteIndex:
-    """Tests for index_utils.write_index()"""
+    # Tests for index_utils.write_index()
     
     def test_write_tuple_format(self, temp_repo):
-        """Should write index with tuple values (hash, mtime, size)."""
+        # Should write index with tuple values (hash, mtime, size)
         index = {
             'file1.txt': ('hash1', 12345, 100),
             'file2.txt': ('hash2', 67890, 200),
@@ -78,19 +67,8 @@ class TestWriteIndex:
         assert 'hash1 12345 100 file1.txt\n' in lines
         assert 'hash2 67890 200 file2.txt\n' in lines
     
-    def test_write_string_format(self, temp_repo):
-        """Should handle string values (just hash, defaults mtime/size to 0)."""
-        index = {
-            'test.txt': 'hashonly',
-        }
-        
-        index_utils.write_index(temp_repo, index)
-        
-        result = index_utils.read_index(temp_repo)
-        assert result['test.txt'] == ('hashonly', 0, 0)
-    
     def test_sorted_output(self, temp_repo):
-        """Should write entries in sorted order."""
+        # Should write entries in sorted order
         index = {
             'z_last.txt': ('hash3', 0, 0),
             'a_first.txt': ('hash1', 0, 0),

@@ -15,7 +15,7 @@ from utils import repository, objects, config, index as index_utils, ignore
 
 @pytest.fixture
 def temp_dir():
-    """Creates a temporary directory that is cleaned up after the test."""
+    # Creates a temporary directory that is cleaned up after the test
     tmp = tempfile.mkdtemp()
     yield tmp
     shutil.rmtree(tmp, ignore_errors=True)
@@ -23,7 +23,7 @@ def temp_dir():
 
 @pytest.fixture
 def temp_repo(temp_dir):
-    """Creates an initialized Pit repository in a temporary directory."""
+    # Creates an initialized Pit repository in a temporary directory
     original_dir = os.getcwd()
     os.chdir(temp_dir)
     
@@ -48,7 +48,7 @@ def temp_repo(temp_dir):
 
 @pytest.fixture
 def repo_with_file(temp_repo):
-    """Creates a repo with a single file (not committed)."""
+    # Creates a repo with a single file (not committed)
     file_path = os.path.join(temp_repo, 'test.txt')
     with open(file_path, 'w') as f:
         f.write('Hello, World!')
@@ -57,7 +57,7 @@ def repo_with_file(temp_repo):
 
 @pytest.fixture
 def repo_with_commit(temp_repo):
-    """Creates a repo with one committed file."""
+    # Creates a repo with one committed file
     # Create and add a file
     file_path = os.path.join(temp_repo, 'README.md')
     with open(file_path, 'w') as f:
@@ -93,7 +93,7 @@ def repo_with_commit(temp_repo):
 
 @pytest.fixture
 def repo_with_branches(repo_with_commit):
-    """Creates a repo with master and a feature branch."""
+    # Creates a repo with master and a feature branch
     repo_root, initial_commit = repo_with_commit
     
     # Create feature branch
@@ -104,8 +104,8 @@ def repo_with_branches(repo_with_commit):
     return repo_root, initial_commit
 
 
+# Mock args object for command functions
 class MockArgs:
-    """Mock args object for command functions."""
     def __init__(self, **kwargs):
         for key, value in kwargs.items():
             setattr(self, key, value)

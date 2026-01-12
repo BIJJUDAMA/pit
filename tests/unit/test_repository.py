@@ -10,15 +10,15 @@ from utils import repository
 
 
 class TestFindRepoRoot:
-    """Tests for repository.find_repo_root()"""
+    # Tests for repository.find_repo_root()
     
     def test_finds_repo_in_current_dir(self, temp_repo):
-        """Should find repo when in root directory."""
+        # Should find repo when in root directory
         result = repository.find_repo_root(temp_repo)
         assert result == temp_repo
     
     def test_finds_repo_in_subdirectory(self, temp_repo):
-        """Should find repo when in a subdirectory."""
+        # Should find repo when in a subdirectory
         subdir = os.path.join(temp_repo, 'src', 'deep', 'nested')
         os.makedirs(subdir)
         os.chdir(subdir)
@@ -27,27 +27,27 @@ class TestFindRepoRoot:
         assert result == temp_repo
     
     def test_returns_none_when_not_in_repo(self, temp_dir):
-        """Should return None when not in a repository."""
+        # Should return None when not in a repository
         result = repository.find_repo_root(temp_dir)
         assert result is None
 
 
 class TestGetHeadCommit:
-    """Tests for repository.get_head_commit()"""
+    # Tests for repository.get_head_commit()
     
     def test_returns_none_for_empty_repo(self, temp_repo):
-        """Should return None when no commits exist."""
+        # Should return None when no commits exist
         result = repository.get_head_commit(temp_repo)
         assert result is None
     
     def test_returns_commit_hash(self, repo_with_commit):
-        """Should return the commit hash when commits exist."""
+        # Should return the commit hash when commits exist
         repo_root, commit_hash = repo_with_commit
         result = repository.get_head_commit(repo_root)
         assert result == commit_hash
     
     def test_handles_detached_head(self, repo_with_commit):
-        """Should return hash when HEAD is detached."""
+        # Should return hash when HEAD is detached
         repo_root, commit_hash = repo_with_commit
         
         # Detach HEAD
@@ -60,15 +60,15 @@ class TestGetHeadCommit:
 
 
 class TestGetCurrentBranch:
-    """Tests for repository.get_current_branch()"""
+    # Tests for repository.get_current_branch()
     
     def test_returns_branch_name(self, temp_repo):
-        """Should return current branch name."""
+        # Should return current branch name
         result = repository.get_current_branch(temp_repo)
         assert result == 'master'
     
     def test_returns_none_when_detached(self, repo_with_commit):
-        """Should return None when HEAD is detached."""
+        # Should return None when HEAD is detached
         repo_root, commit_hash = repo_with_commit
         
         # Detach HEAD
@@ -81,15 +81,15 @@ class TestGetCurrentBranch:
 
 
 class TestGetHeadStatus:
-    """Tests for repository.get_head_status()"""
+    # Tests for repository.get_head_status()
     
     def test_on_branch(self, temp_repo):
-        """Should return 'On branch X' when on a branch."""
+        # Should return 'On branch X' when on a branch
         result = repository.get_head_status(temp_repo)
         assert result == "On branch master"
     
     def test_detached_head(self, repo_with_commit):
-        """Should return detached message when HEAD is detached."""
+        # Should return detached message when HEAD is detached
         repo_root, commit_hash = repo_with_commit
         
         # Detach HEAD
@@ -102,10 +102,10 @@ class TestGetHeadStatus:
 
 
 class TestGetAllBranches:
-    """Tests for repository.get_all_branches()"""
+    # Tests for repository.get_all_branches()
     
     def test_lists_all_branches(self, repo_with_branches):
-        """Should list all branches."""
+        # Should list all branches
         repo_root, _ = repo_with_branches
         result = repository.get_all_branches(repo_root)
         
@@ -115,10 +115,10 @@ class TestGetAllBranches:
 
 
 class TestCreateBranch:
-    """Tests for repository.create_branch()"""
+    # Tests for repository.create_branch()
     
     def test_creates_branch_file(self, repo_with_commit):
-        """Should create a new branch file."""
+        # Should create a new branch file
         repo_root, commit_hash = repo_with_commit
         
         repository.create_branch(repo_root, 'new-branch', commit_hash)
