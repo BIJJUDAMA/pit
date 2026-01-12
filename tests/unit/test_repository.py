@@ -24,7 +24,8 @@ class TestFindRepoRoot:
         os.chdir(subdir)
         
         result = repository.find_repo_root()
-        assert result == temp_repo
+        # Use realpath to resolve symlinks 
+        assert os.path.realpath(result) == os.path.realpath(temp_repo)
     
     def test_returns_none_when_not_in_repo(self, temp_dir):
         # Should return None when not in a repository
