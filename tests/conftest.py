@@ -16,8 +16,11 @@ from utils import repository, objects, config, index as index_utils, ignore
 @pytest.fixture
 def temp_dir():
     # Creates a temporary directory that is cleaned up after the test
+    # Also saves/restores cwd to prevent issues when tests change directories
+    original_dir = os.getcwd()
     tmp = tempfile.mkdtemp()
     yield tmp
+    os.chdir(original_dir)  
     shutil.rmtree(tmp, ignore_errors=True)
 
 
