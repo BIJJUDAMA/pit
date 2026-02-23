@@ -440,7 +440,6 @@ See `.github/workflows/test.yml` for configuration.
 |------------|-------------|
 | **Local Only** | No network operations (`clone`, `fetch`, `pull`, `push`) |
 | **Basic Conflict Handling** | Conflicts require manual resolution |
-| **Cross-Platform** | Fully supports Windows, macOS, and Linux |
 
 ---
 
